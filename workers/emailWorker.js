@@ -1,8 +1,8 @@
 import { Worker } from "bullmq";
 import Redis from "ioredis";
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
-// Connect to Redis
+// Redis connection
 const redisUrl = process.env.REDIS_URL;
 
 if (!redisUrl) {
@@ -14,27 +14,25 @@ const connection = new Redis(redisUrl, {
   tls: {},
 });
 
-// Setup email transporter
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_ADMIN,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+// Resend client
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Create worker
+if (!process.env.RESEND_API_KEY) {
+  throw new Error("RESEND_API_KEY is not set");
+}
+
+// Worker
 const worker = new Worker(
   "emailQueue",
   async (job) => {
     console.log(`📧 Processing job ${job.id}...`);
-    
+
     const { email, name } = job.data;
-    
-    await transporter.sendMail({
-      from: `"QuickBite 🍽️" <${process.env.EMAIL_ADMIN}>`,
+
+    await resend.emails.send({
+      from: "QuickBite <onboarding@resend.dev>",
       to: email,
-      subject: 'Welcome to QuickBite 🍽️',
+      subject: "Welcome to QuickBite 🍽️",
       html: `
         <div style="font-family: Arial, sans-serif; background:#f9fafb; padding:20px;">
           <div style="max-width:600px; margin:auto; background:#ffffff; border-radius:8px; padding:24px;">
@@ -46,12 +44,15 @@ const worker = new Worker(
             <p style="color:#6b7280; font-size:14px;">— The QuickBite Team</p>
           </div>
         </div>
-      `
+      `,
     });
-    
+
     console.log(`✅ Email sent to ${email}`);
   },
-  { connection, concurrency: 5 }
+  {
+    connection,
+    concurrency: 5,
+  }
 );
 
 worker.on("completed", (job) => {
