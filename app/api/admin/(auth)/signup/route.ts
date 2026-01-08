@@ -1,21 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { emailQueue } from "@/lib/queues/emailQueue";
+
 export async function POST(req: NextRequest) {
   try {
     const { email, password } = await req.json();
     const supabase = await createClient();
 
-    const { data, error } = await supabase.auth.signUp({ email, password });
-      if (data.user?.email) {
-        //  Enqueue a job to send welcome email
-        await emailQueue.add("send-welcome-email", {
-            email: data.user.email,
-            name: data.user.user_metadata?.full_name || "",
-        });
-    }
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+
     if (error) {
-      // Handle network/timeout errors separately if you want
+      console.error("Supabase signup error:", error);
+
       if (
         error.message.includes("timeout") ||
         error.message.includes("ECONNRESET") ||
@@ -27,11 +26,28 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      );
     }
 
-    return NextResponse.json({ success: true, user: data.user });
+    // ✅ ONLY enqueue email if signup succeeded
+    if (data.user?.email) {
+      await emailQueue.add("send-welcome-email", {
+        email: data.user.email,
+        name: data.user.user_metadata?.full_name || "",
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      user: data.user,
+    });
+
   } catch (err) {
+    console.error("Signup route error:", err);
+
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Signup failed" },
       { status: 500 }

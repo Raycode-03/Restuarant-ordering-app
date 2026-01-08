@@ -24,7 +24,7 @@ export function SignUpForm() {
   description: "Enter your email and password to access your account.",
   success: "Signed up successfully!",
   error: "Unable to sign in.",
-  button: "Log In",
+  button: "Sign Up",
   forgot_link: "Forgot-Password?",
   linkText: "Don't have an account?",
   linkButton: "Login",
