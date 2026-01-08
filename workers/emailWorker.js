@@ -29,7 +29,7 @@ const worker = new Worker(
     const { email, name } = job.data;
 
     const mailOptions = ({
-      from: `QuickBite ${process.env.EMAIL_ADMIN}`,
+      from: `"QuickBite" <${process.env.EMAIL_ADMIN}>`,
       to: email,
       subject: "Welcome to QuickBite 🍽️",
       html: `
