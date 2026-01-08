@@ -1,0 +1,25 @@
+import { NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { updateSession } from '@/utils/supabase/middleware'
+export async function middleware(request: NextRequest) {
+    let response = await updateSession(request);
+  // Check if user is authenticated
+  const token = request.cookies.get('access_token') 
+  
+  // If not authenticated and trying to access protected routes
+  if (!token && (
+    request.nextUrl.pathname.startsWith('/delivery') || 
+    request.nextUrl.pathname.startsWith('/orders')
+  )) {
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
+  return response;
+  
+}
+
+export const config = {
+  matcher: [
+    '/delivery/:path*',
+    '/orders/:path*'
+  ]
+}
