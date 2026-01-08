@@ -30,7 +30,7 @@ const worker = new Worker(
     const { email, name } = job.data;
 
     await resend.emails.send({
-      from: `QuickBite onboarding@resend.dev`,
+      from: "QuickBite <onboarding@resend.dev>",
       to: email,
       subject: "Welcome to QuickBite 🍽️",
       html: `

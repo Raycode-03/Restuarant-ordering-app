@@ -8,7 +8,7 @@ function Loading() {
         
             <div className="w-full max-w-lg mx-auto">
   <Image 
-    src={"/Parcellogo.png"} 
+    src={"/logo/savory.png"} 
     alt='Loading image' 
     width={203} 
     height={203} 
