@@ -1,25 +1,24 @@
 import { Worker } from "bullmq";
 import Redis from "ioredis";
-import { Resend } from "resend";
-
+import nodemailer from 'nodemailer'
 // Redis connection
 const redisUrl = process.env.REDIS_URL;
 
 if (!redisUrl) {
   throw new Error("REDIS_URL is not set");
 }
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_ADMIN, // your Gmail address
+    pass: process.env.EMAIL_PASS, // app password
+  },
+});
 
 const connection = new Redis(redisUrl, {
   maxRetriesPerRequest: null,
   tls: {},
 });
-
-// Resend client
-const resend = new Resend(process.env.RESEND_API_KEY);
-
-if (!process.env.RESEND_API_KEY) {
-  throw new Error("RESEND_API_KEY is not set");
-}
 
 // Worker
 const worker = new Worker(
@@ -29,7 +28,7 @@ const worker = new Worker(
 
     const { email, name } = job.data;
 
-    await resend.emails.send({
+    const mailOptions = ({
       from: "QuickBite <onboarding@resend.dev>",
       to: email,
       subject: "Welcome to QuickBite 🍽️",
@@ -46,7 +45,7 @@ const worker = new Worker(
         </div>
       `,
     });
-
+      await transporter.sendMail(mailOptions);
     console.log(`✅ Email sent to ${email}`);
   },
   {
