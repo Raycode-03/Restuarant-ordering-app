@@ -28,7 +28,7 @@ const worker = new Worker(
 
     const { email, name } = job.data;
 
-    const mailOptions = ({
+    const mailOptions = {
       from: `"QuickBite" <${process.env.EMAIL_ADMIN}>`,
       to: email,
       subject: "Welcome to QuickBite 🍽️",
@@ -44,7 +44,7 @@ const worker = new Worker(
           </div>
         </div>
       `,
-    });
+    };
       await transporter.sendMail(mailOptions);
     console.log(`✅ Email sent to ${email}`);
   },
