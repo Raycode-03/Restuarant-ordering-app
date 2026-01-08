@@ -27,7 +27,7 @@ const Login_content = {
   forgot_link: "Forgot-Password?",
   linkText: "Don't have an account?",
   linkButton: "Sign up",
-  linkHref: "/signup",
+  linkHref: "/admin/signup",
   endpoint: "login",
 };
 
