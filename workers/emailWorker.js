@@ -1,56 +1,66 @@
 import { Worker } from "bullmq";
 import Redis from "ioredis";
-import nodemailer from 'nodemailer'
-// Redis connection
-const redisUrl = process.env.REDIS_URL;
+import { Resend } from "resend";
 
-if (!redisUrl) {
-  throw new Error("REDIS_URL is not set");
+// Validate environment
+if (!process.env.REDIS_URL) {
+  throw new Error("REDIS_URL is required");
 }
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_ADMIN, // your Gmail address
-    pass: process.env.EMAIL_PASS, // app password
-  },
-});
 
-const connection = new Redis(redisUrl, {
+if (!process.env.RESEND_API_KEY) {
+  throw new Error("RESEND_API_KEY is required");
+}
+
+// Redis connection
+const connection = new Redis(process.env.REDIS_URL, {
   maxRetriesPerRequest: null,
   tls: {},
 });
+
+// Resend client
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Worker
 const worker = new Worker(
   "emailQueue",
   async (job) => {
-    console.log(`📧 Processing job ${job.id}...`);
-
     const { email, name } = job.data;
+    
+    console.log(`📧 Sending email to ${email}...`);
 
-    const mailOptions = {
-      from: `"QuickBite" <${process.env.EMAIL_ADMIN}>`,
-      to: email,
-      subject: "Welcome to QuickBite 🍽️",
-      html: `
-        <div style="font-family: Arial, sans-serif; background:#f9fafb; padding:20px;">
-          <div style="max-width:600px; margin:auto; background:#ffffff; border-radius:8px; padding:24px;">
-            <h2 style="color:#111827;">Hi ${name || "there"}, 👋</h2>
-            <p style="color:#374151;">
-              Thank you for signing up with <strong>QuickBite</strong> 🍔🍕.
-            </p>
-            <hr style="margin:20px 0;" />
-            <p style="color:#6b7280; font-size:14px;">— The QuickBite Team</p>
+    try {
+      const { data, error } = await resend.emails.send({
+        from: "QuickBite <onboarding@resend.dev>", // Use resend.dev for testing
+        to: email,
+        subject: "Welcome to QuickBite 🍽️",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #111;">Welcome to QuickBite! 🍽️</h1>
+            <p>Hi ${name || "there"} 👋</p>
+            <p>Thank you for signing up with <strong>QuickBite</strong> 🍔🍕</p>
+            <p>We're excited to have you on board!</p>
+            <hr />
+            <p style="color: #666; font-size: 14px;">— The QuickBite Team</p>
           </div>
-        </div>
-      `,
-    };
-      await transporter.sendMail(mailOptions);
-    console.log(`✅ Email sent to ${email}`);
+        `,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      console.log(`✅ Email sent to ${email} - ID: ${data.id}`);
+      return { success: true, id: data.id };
+    } catch (err) {
+      console.error(`❌ Failed to send email to ${email}:`, err.message);
+      throw err;
+    }
   },
   {
     connection,
     concurrency: 5,
+    removeOnComplete: { count: 100 },
+    removeOnFail: { count: 50 },
   }
 );
 
@@ -59,7 +69,13 @@ worker.on("completed", (job) => {
 });
 
 worker.on("failed", (job, err) => {
-  console.error(`❌ Job ${job?.id} failed:`, err);
+  console.error(`❌ Job ${job?.id} failed:`, err.message);
 });
 
-console.log("🚀 Email worker started and listening for jobs...");
+console.log("🚀 Email worker started with Resend");
+
+// Graceful shutdown
+process.on("SIGTERM", async () => {
+  await worker.close();
+  connection.quit();
+});
