@@ -1,10 +1,9 @@
 "use client"
 
 import Link from "next/link";
-import React, { useState, FormEvent } from 'react';
+import React, { FormEvent } from 'react';
 import { Button } from "@/components/ui/button";
 import {
-  Card,
   CardContent,
   CardDescription,
   CardHeader,
@@ -107,7 +106,7 @@ export function SignUpForm() {
 
             <div className="text-sm flex justify-end">
               <Link 
-                href={`/${SignupContent.forgot_link.toLowerCase().replace(/\s+/g, "-")}`} 
+                href={`/admin/${SignupContent.forgot_link.toLowerCase().replace(/\s+/g, "-")}`} 
                 className="text-gray-500 mt-2 hover:underline hover:text-blue-300"
               >
                 {SignupContent.forgot_link}

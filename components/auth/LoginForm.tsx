@@ -3,7 +3,6 @@ import Link from "next/link"
 import { FormEvent } from "react"
 import { Button } from "@/components/ui/button"
 import {
-  Card,
   CardContent,
   CardDescription,
   CardHeader,
@@ -21,7 +20,7 @@ import { useAuthLoading } from "@/components/auth/AuthLoadingContext";
 
 const Login_content = {
   title: "Welcome back",
-  description: "Enter your email and password",
+  description: "Enter your email and password to login",
   success: "Signed in successfully!",
   error: "Unable to sign in.",
   button: "Log In",
@@ -61,7 +60,7 @@ export function LoginForm() {
         setLoadingType(null);
       } else {
         toast.success("Login successful!");
-        // router.push("/dashboard");
+        router.push("/admin/dashboard");
       }
     } catch (error) {
       toast.error("Login failed. Please check your credentials.");
@@ -102,7 +101,7 @@ export function LoginForm() {
           </div>
           <div className="text-sm flex justify-end">
             <Link 
-              href={`/${Login_content.forgot_link.toLowerCase()}`} 
+              href={`/admin/${Login_content.forgot_link.toLowerCase()}`} 
               className="text-gray-500 mt-2 hover:underline hover:text-blue-300"
             >
               {Login_content.forgot_link.replace("-", " ")}
