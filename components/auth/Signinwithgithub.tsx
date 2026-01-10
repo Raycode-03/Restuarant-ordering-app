@@ -1,36 +1,38 @@
 "use client";
 
-import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import { useAuthLoading } from "./AuthLoadingContext";
 
 const SignInWithGithubButton = () => {
-    const [loading, setLoading] = useState(false);
+     const { loadingType, setLoadingType } = useAuthLoading();
+  const isLoading = loadingType === 'github';
+  const isDisabled = loadingType !== null;
 
-    const handleGithubSignIn = () => {
-        setLoading(true);
-        // Full page redirect - THIS IS CORRECT
-        window.location.href = '/api/admin/github';
-    };
 
-    return (
-        <Button
-            type="button"
-            variant="outline"
-            className="w-full p-4"
-            onClick={handleGithubSignIn}
-            disabled={loading}
-        >
-            <Image 
-                src="/logos/github.svg" 
-                alt="github logo" 
-                width={20} 
-                height={20} 
-                className="mr-2 inline-block"
-            />
-            {loading ? "Redirecting..." : "Continue with Github"}
-        </Button>
-    );
+  const handleGithubSignIn = () => {
+    setLoadingType('github');
+    window.location.href = "/api/admin/github";
+  };
+
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      className="w-83 p-4 flex items-center justify-center bg-black/30"
+      onClick={handleGithubSignIn}
+      disabled={isDisabled}
+    >
+      <Image
+        src="/logos/github.svg"
+        alt="Github logo"
+        width={20}
+        height={20}
+        className="mr-2 inline-block"
+      />
+      {isLoading ? "Redirecting..." : "Continue with Github"}
+    </Button>
+  );
 };
 
 export default SignInWithGithubButton;

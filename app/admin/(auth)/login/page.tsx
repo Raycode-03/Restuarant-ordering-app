@@ -1,15 +1,53 @@
-import React from 'react'
-import { LoginForm } from '@/components/auth/LoginForm'
-import {Card} from "@/components/ui/card";
-function page() {
-  return (
-    
-    <div className="w-full h-full flex items-center justify-center">
-        <Card className="w-full max-w-sm max-w-[90%] md:max-w-sm">
-          <div><LoginForm/></div>
-        </Card>
-    </div>
-  )
-}
+import React from "react";
+import { Card } from "@/components/ui/card";
+import { LoginForm } from "@/components/auth/LoginForm";
+import Image from "next/image";
+import { AuthLoadingProvider } from "@/components/auth/AuthLoadingContext";
 
-export default page
+export default function Page() {
+  return (
+    <AuthLoadingProvider>
+      <div className="w-full min-h-screen flex">
+        {/* Left: Form */}
+        <div className="w-full md:w-1/2 relative bg-background">
+          <div className="absolute -top-12 left-6 z-10">
+            <Image
+              src="/logos/svg.png"
+              alt="Savory logo"
+              width={120}
+              height={120}
+              className="object-contain"
+              priority
+            />
+          </div>
+
+          <div className="w-full h-full flex items-center justify-center">
+            <Card className="w-full max-w-sm border-none shadow-none">
+              <LoginForm />
+            </Card>
+          </div>
+        </div>
+
+        {/* Right: Image + Overlay (Desktop only) */}
+        <div className="hidden md:block md:w-1/2 relative">
+          <Image
+            src="/images/restaurant_image.jpg"
+            alt="Login background"
+            fill
+            className="object-cover"
+            priority
+          />
+          <div className="absolute inset-0 bg-black/60" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-white px-8 text-center">
+            <h1 className="text-4xl font-bold mb-2">
+              Welcome to Savory
+            </h1>
+            <p className="text-lg opacity-90 max-w-md">
+              Manage your restaurant, orders, and customers all in one place.
+            </p>
+          </div>
+        </div>
+      </div>
+    </AuthLoadingProvider>
+  );
+}

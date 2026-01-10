@@ -6,9 +6,10 @@ export async function POST(req: NextRequest) {
   try {
     const { email, password } = await req.json();
     const supabase = await createClient();
-
+    
+    // Proceed with signup
     const { data, error } = await supabase.auth.signUp({
-      email,
+      email,  
       password,
     });
 
@@ -43,6 +44,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       user: data.user,
+      email: data.user?.email, // Include email in response
     });
 
   } catch (err) {

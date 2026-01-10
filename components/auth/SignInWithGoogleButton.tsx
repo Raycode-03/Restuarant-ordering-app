@@ -1,24 +1,27 @@
 "use client";
 
-import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import { useAuthLoading } from "./AuthLoadingContext";
 
-const SignInWithGoogleButton = () => {
-  const [loading, setLoading] = useState(false);
+const SignInWithGoogleButton = () => { 
+   const { loadingType, setLoadingType } = useAuthLoading();
+  const isLoading = loadingType === 'google';
+  const isDisabled = loadingType !== null;
+
 
   const handleGoogleSignIn = async () => {
-    setLoading(true);
-    window.location.href = '/api/admin/google';  // ✅ Correct path
+    setLoadingType('google');
+    window.location.href = '/api/admin/google';  
   };
 
   return (
     <Button
       type="button"
       variant="outline"
-      className="w-full p-4"
+      className="w-83 p-4 flex items-center justify-center bg-black/30"
       onClick={handleGoogleSignIn}
-      disabled={loading}
+      disabled={isDisabled}
     >
       <Image 
         src="/logos/google.svg" 
@@ -27,7 +30,7 @@ const SignInWithGoogleButton = () => {
         height={20} 
         className="mr-2 inline-block"
       />
-      {loading ? "Redirecting..." : "Continue with Google"}
+      {isLoading ? "Redirecting..." : "Continue with Google"}
     </Button>
   );
 };

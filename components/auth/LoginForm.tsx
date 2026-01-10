@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link"
-import { useState, FormEvent } from "react"
+import { FormEvent } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -17,10 +17,11 @@ import { Separator } from "@/components/ui/separator";
 import SignInWithGoogleButton from "@/components/auth/SignInWithGoogleButton"
 import SignInWithGithubButton from "@/components/auth/Signinwithgithub"
 import { useRouter } from "next/navigation";
+import { useAuthLoading } from "@/components/auth/AuthLoadingContext";
 
 const Login_content = {
-  title: "Sign in to your account",
-  description: "Enter your email and password to access your account.",
+  title: "Welcome back",
+  description: "Enter your email and password",
   success: "Signed in successfully!",
   error: "Unable to sign in.",
   button: "Log In",
@@ -32,12 +33,15 @@ const Login_content = {
 };
 
 export function LoginForm() {
+  const { loadingType, setLoadingType } = useAuthLoading();
+  const router = useRouter();
   
-  const [loading, setLoading] = useState(false);
-  const router= useRouter();
+  const isFormLoading = loadingType === 'form';
+  const isDisabled = loadingType !== null;
+  
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
+    setLoadingType('form');
 
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
@@ -54,27 +58,24 @@ export function LoginForm() {
 
       if (!res.ok || result.error) {
         toast.error(result.error || "Login failed");
+        setLoadingType(null);
       } else {
         toast.success("Login successful!");
-        // router.push("/dashboard"); // or wherever you want to redirect
+        // router.push("/dashboard");
       }
     } catch (error) {
       toast.error("Login failed. Please check your credentials.");
-    } finally {
-      setLoading(false);
+      setLoadingType(null);
     }
   };
 
-
   return (
     <>
-      {/* Heading */}
       <CardHeader className="space-y-2">
         <CardTitle className="text-3xl font-bold text-center">{Login_content.title}</CardTitle>
         <CardDescription className="text-center">{Login_content.description}</CardDescription>
       </CardHeader>
 
-      {/* Form */}
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-6">
           <div className="grid gap-2">
@@ -85,7 +86,7 @@ export function LoginForm() {
               name="email"
               placeholder="m@example.com"
               required
-              disabled={loading}
+              disabled={isDisabled}
             />
           </div>
 
@@ -96,7 +97,7 @@ export function LoginForm() {
               type="password"
               name="password"
               required
-              disabled={loading}
+              disabled={isDisabled}
             />
           </div>
           <div className="text-sm flex justify-end">
@@ -109,14 +110,13 @@ export function LoginForm() {
           </div>
         </CardContent>
 
-        {/* Buttons */}
         <CardFooter className="flex flex-col gap-3 mt-4">
           <Button 
             type="submit" 
             className="w-full bg-blue-600" 
-            disabled={loading}
+            disabled={isDisabled}
           >
-            {loading ? "Loading..." : Login_content.button}
+            {isFormLoading ? "Loading..." : Login_content.button}
           </Button>
 
           <Separator className="my-2 bg-gray-200" />
@@ -126,7 +126,6 @@ export function LoginForm() {
             <SignInWithGithubButton/>
           </div>
 
-          {/* Bottom Link */}
           <p className="text-sm text-gray-500 mt-2">
             {Login_content.linkText}
             <Link href={Login_content.linkHref}>

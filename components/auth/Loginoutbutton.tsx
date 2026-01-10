@@ -3,26 +3,41 @@ import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-import { signout } from "@/lib/auth-actions";
+// import { signout } from "@/lib/auth-actions";
+interface User {
+  name:string;
+  email:string;
 
+}
 const LoginButton = () => {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
   const supabase = createClient();
   useEffect(() => {
     const fetchUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUser(user);
-    };
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error) {
+    console.error(error.message);
+    setUser(null);
+    return;
+  }
+  if (user) {
+    setUser({
+      name: user.user_metadata?.full_name || "No Name",
+      email: user.email || ""
+    });
+  } else {
+    setUser(null);
+  }
+};
+
     fetchUser();
   }, []);
   if (user) {
     return (
       <Button
         onClick={() => {
-          signout();
+          // signout();
           setUser(null);
         }}
       >
