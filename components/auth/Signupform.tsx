@@ -61,12 +61,12 @@ export function SignUpForm() {
       } else {
         toast.success(SignupContent.success);
          // Redirect to email verification page instead of login
-        router.push("/admin/verify-email");
+        router.push(`/admin/verify-email?email=${encodeURIComponent(email)}`);
       }
     } catch {
       toast.error(SignupContent.error);
     } finally {
-      setLoadingType('form');
+      setLoadingType(null); 
     }
   };
 

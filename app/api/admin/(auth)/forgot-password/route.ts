@@ -11,7 +11,13 @@ export async function POST(req: NextRequest) {
     }
 
     const supabase = await createClient();
-
+        const {data: staff , error: staffError } = await supabase.from('staff').select('id').eq("email", email ).single();
+      if (staffError || !staff) {
+      return NextResponse.json(
+        { error: "Staff email not found" },
+        { status: 404 }
+      );
+    }
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${process.env.NEXTAUTH_URL}/admin/new-password`,
     });

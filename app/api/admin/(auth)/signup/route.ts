@@ -6,7 +6,19 @@ export async function POST(req: NextRequest) {
   try {
     const { email, password } = await req.json();
     const supabase = await createClient();
-    
+
+      const {data: staff , error: staffError} = await supabase.from('staff').select('id').eq("email", email ).single();
+      if ( staff) {
+      return NextResponse.json(
+          { error: "Please check your credentials" },
+          { status: 409 }
+      );
+    }
+    console.log("STAFF CHECK RESULT:", {
+      email,
+      staff,
+      staffError,
+    });
     // Proceed with signup
     const { data, error } = await supabase.auth.signUp({
       email,  
@@ -35,16 +47,20 @@ export async function POST(req: NextRequest) {
 
     // ✅ ONLY enqueue email if signup succeeded
     if (data.user?.email) {
-      await emailQueue.add("send-welcome-email", {
-        email: data.user.email,
-        name: data.user.user_metadata?.full_name || "",
-      });
+      try {
+        await emailQueue.add("send-welcome-email", {
+          email: data.user.email,
+          name: data.user.user_metadata?.full_name || "",
+        });
+      } catch (queueError) {
+        console.error("Email queue failed:", queueError);
+      }
     }
 
     return NextResponse.json({
       success: true,
       user: data.user,
-      email: data.user?.email, // Include email in response
+      email: data.user?.email,
     });
 
   } catch (err) {

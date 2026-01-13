@@ -11,7 +11,25 @@ export async function POST(req: NextRequest) {
       password,
     });
 
+    
     if (error) {
+      // Check if it's an email confirmation error
+      if (error.message.toLowerCase().includes("email not confirmed")) {
+        return NextResponse.json(
+          { 
+            error: "Please verify your email before logging in. Check your inbox for the verification link.",
+            code: "EMAIL_NOT_CONFIRMED"
+          },
+          { status: 401 }
+        );
+      }
+        // Check for invalid credentials
+      if (error.message.toLowerCase().includes("invalid")) {
+        return NextResponse.json(
+          { error: "Invalid email or password" },
+          { status: 401 }
+        );
+      }
       return NextResponse.json({ error: error.message }, { status: 401 });
     }
 

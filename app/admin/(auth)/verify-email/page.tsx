@@ -1,11 +1,44 @@
-import React from "react";
+'use client'
+import React , {useState} from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Mail, ArrowLeft } from "lucide-react";
+import { Mail, ArrowLeft , RefreshCw} from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-
+import { toast } from "sonner";
+import { useSearchParams } from "next/navigation";
 export default function VerifyEmailPage() {
+  const searchParams = useSearchParams();
+  const [isResending, setIsResending] = useState(false);
+  const email = searchParams.get('email');
+  const handleResendEmail = async () => {
+    if (!email) {
+      toast.error("Email address not found. Please try again.");
+      return;
+    }
+
+    setIsResending(true);
+
+    try {
+      const res = await fetch("/api/admin/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const result = await res.json();
+
+      if (res.ok) {
+        toast.success("Verification email sent! Check your inbox.");
+      } else {
+        toast.error(result.error || "Failed to resend email");
+      }
+    } catch (error) {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsResending(false);
+    }
+  };
   return (
     <div className="w-full min-h-screen flex">
       
@@ -55,7 +88,27 @@ export default function VerifyEmailPage() {
                     contact support
                 </Link>.
                 </p>
-
+              {/* Resend Button - only show if we have email */}
+              {email && (
+                <Button 
+                  onClick={handleResendEmail}
+                  disabled={isResending}
+                  variant="outline"
+                  className="w-full"
+                >
+                  {isResending ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Resend Verification Email
+                    </>
+                  )}
+                </Button>
+              )}
 
               <div className="pt-4">
                 <Link href="/admin/login">
