@@ -16,7 +16,7 @@
   import SignInWithGoogleButton from "@/components/auth/SignInWithGoogleButton"
   import SignInWithGithubButton from "@/components/auth/Signinwithgithub"
   import { useRouter } from "next/navigation";
-  import { useAuthLoading } from "@/components/auth/AuthLoadingContext";
+  import { useAuthLoading } from "@/context/AuthLoadingContext";
 
   const Login_content = {
     title: "Welcome back",
@@ -41,7 +41,7 @@
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault();
       setLoadingType('form');
-
+       const toastId = toast.loading("Signing you in...");
       const formData = new FormData(e.currentTarget);
       const email = formData.get("email") as string;
       const password = formData.get("password") as string;
@@ -57,21 +57,22 @@
 
         if (!res.ok || result.error) {
            if (result.code === "EMAIL_NOT_CONFIRMED") {
-              toast.error(result.error);
+              toast.error(result.error, { id: toastId });
               // Redirect to verification page after 2 seconds
               setTimeout(() => {
                 router.push(`/admin/verify-email?email=${encodeURIComponent(email)}`);
               }, 2000);
             }
             else{
-              toast.error(result.error || "Login failed");  
+              toast.error(result.error || "Login failed", { id: toastId });
             }
         } else {
-          toast.success("Login successful!");
+           toast.success("Login successful!", { id: toastId });
           router.push("/admin/dashboard");
         }
       } catch (error) {
-        toast.error("Login failed. Please check your credentials.");   
+        toast.error("Login failed. Please check your credentials.", {
+          id: toastId, });
       }finally {
         setLoadingType(null);
       }

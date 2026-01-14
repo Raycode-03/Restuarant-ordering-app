@@ -17,7 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import SignInWithGoogleButton from "@/components/auth/SignInWithGoogleButton";
 import SignInWithGithubButton from "@/components/auth/Signinwithgithub";
 import { useRouter } from "next/navigation";
-import { useAuthLoading } from "@/components/auth/AuthLoadingContext";
+import { useAuthLoading } from "@/context/AuthLoadingContext";
 export function SignUpForm() {
   
   const SignupContent = {
@@ -42,7 +42,7 @@ export function SignUpForm() {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoadingType('form');
-
+    const toastId = toast.loading("Signing you up...");
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
@@ -57,14 +57,14 @@ export function SignUpForm() {
       const result = await res.json();
 
       if (!res.ok || result.error) {
-        toast.error(result.error || "Signup failed");
+        toast.error(result.error || "Signup failed", { id: toastId });
       } else {
-        toast.success(SignupContent.success);
+        toast.success(SignupContent.success,{ id: toastId });
          // Redirect to email verification page instead of login
         router.push(`/admin/verify-email?email=${encodeURIComponent(email)}`);
       }
     } catch {
-      toast.error(SignupContent.error);
+      toast.error(SignupContent.error,{ id: toastId });
     } finally {
       setLoadingType(null); 
     }

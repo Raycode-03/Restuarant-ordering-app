@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { useAuthLoading } from "./AuthLoadingContext";
+import { useAuthLoading } from "../../context/AuthLoadingContext";
 
 const SignInWithGithubButton = () => {
      const { loadingType, setLoadingType } = useAuthLoading();

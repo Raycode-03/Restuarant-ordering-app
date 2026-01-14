@@ -52,7 +52,7 @@ export default function NewPasswordPage() {
 
     // Validate passwords match
     if (newPassword !== confirmPassword) {
-      toast.error("Passwords do not match");
+      toast.error("Passwords do not match" );
       return;
     }
 

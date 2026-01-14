@@ -2,15 +2,17 @@
 import React , {useState} from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Mail, ArrowLeft , RefreshCw} from "lucide-react";
+import { Mail, ArrowLeft , RefreshCw } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { toast } from "sonner";
 import { useSearchParams } from "next/navigation";
+
 export default function VerifyEmailPage() {
   const searchParams = useSearchParams();
   const [isResending, setIsResending] = useState(false);
   const email = searchParams.get('email');
+
   const handleResendEmail = async () => {
     if (!email) {
       toast.error("Email address not found. Please try again.");
@@ -18,6 +20,7 @@ export default function VerifyEmailPage() {
     }
 
     setIsResending(true);
+    const toastId = toast.loading("Sending verification email...");
 
     try {
       const res = await fetch("/api/admin/resend-verification", {
@@ -29,16 +32,17 @@ export default function VerifyEmailPage() {
       const result = await res.json();
 
       if (res.ok) {
-        toast.success("Verification email sent! Check your inbox.");
+        toast.success("Verification email sent! Check your inbox.", { id: toastId });
       } else {
-        toast.error(result.error || "Failed to resend email");
+        toast.error(result.error || "Failed to resend email", { id: toastId });
       }
     } catch (error) {
-      toast.error("Something went wrong. Please try again.");
+      toast.error("Something went wrong. Please try again.", { id: toastId });
     } finally {
       setIsResending(false);
     }
   };
+
   return (
     <div className="w-full min-h-screen flex">
       
@@ -87,7 +91,8 @@ export default function VerifyEmailPage() {
                 >
                     contact support
                 </Link>.
-                </p>
+              </p>
+
               {/* Resend Button - only show if we have email */}
               {email && (
                 <Button 

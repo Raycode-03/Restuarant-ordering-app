@@ -1,8 +1,10 @@
+// app/auth/github/route.ts (or pages/api/auth/github.ts)
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
-import { emailQueue } from "@/lib/queues/emailQueue";
+
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
+  
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "github",
     options: {
@@ -10,15 +12,17 @@ export async function GET(request: NextRequest) {
         access_type: "offline",
         prompt: "consent",
       },
-      redirectTo: `https://pncaoqclkoynezcnntqf.supabase.co/auth/v1/callback`,
-      ///auth/v1/callback
+      // Point to YOUR callback route, not Supabase's
+      redirectTo: `${request.nextUrl.origin}/admin/callback`,
     },
   });
-  
 
   if (error) {
     console.error("GitHub OAuth error:", error);
-    return NextResponse.redirect(new URL("/error", request.url));
+    // Redirect to error page with error message
+    return NextResponse.redirect(
+      new URL(`/admin/auth-error?message=${encodeURIComponent(error.message)}`, request.url)
+    );
   }
 
   return NextResponse.redirect(data.url);

@@ -2,7 +2,7 @@ import React from "react";
 import { Card } from "@/components/ui/card";
 import { SignUpForm } from "@/components/auth/Signupform";
 import Image from "next/image";
-import { AuthLoadingProvider } from "@/components/auth/AuthLoadingContext";
+import { AuthLoadingProvider } from "@/context/AuthLoadingContext";
 export default function Page() {
   return (
     <AuthLoadingProvider>

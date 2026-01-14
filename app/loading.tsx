@@ -8,11 +8,11 @@ function Loading() {
         
             <div className="w-full max-w-lg mx-auto">
   <Image 
-    src={"/logo/savory.png"} 
+    src={"/logos/svg.png"} 
     alt='Loading image' 
     width={203} 
     height={203} 
-    className='animate-pulse w-full max-[460px]:px-12 h-auto'
+    className='animate-pulse w-full max-[460px]:px-12 h-auto invert'
   />
 </div>
         

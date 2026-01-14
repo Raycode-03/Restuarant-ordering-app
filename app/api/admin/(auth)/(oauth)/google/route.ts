@@ -9,16 +9,19 @@ export async function GET(request: NextRequest) {
         access_type: "offline",
         prompt: "consent",
       },
-      redirectTo: `https://pncaoqclkoynezcnntqf.supabase.co/auth/v1/callback`,
+      redirectTo: `${request.nextUrl.origin}/admin/callback`,
       
     },
   });
   
 
   if (error) {
-    console.error("Google OAuth error:", error);
-    return NextResponse.redirect(new URL("/error", request.url));
+    console.error("GitHub OAuth error:", error);
+    // Redirect to error page with error message
+    return NextResponse.redirect(
+      new URL(`/admin/auth-error?message=${encodeURIComponent(error.message)}`, request.url)
+    );
   }
-
   return NextResponse.redirect(data.url);
+
 }

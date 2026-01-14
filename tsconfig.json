@@ -19,7 +19,7 @@
       }
     ],
     "paths": {
-      "@/*": ["./*", "./lib/*","./app/*", "./components/*", "./api/auth*" , "./utils/*" , ],
+      "@/*": ["./*", "./lib/*","./app/*", "./components/*", "./api/auth*" , "./utils/*" ,"./context/*" , ],
     }
   },
   "include": ["next-env.d.ts", "**/*.ts",  "**/*.tsx", ".next/types/**/*.ts", "workers/emailWorker.js"],
