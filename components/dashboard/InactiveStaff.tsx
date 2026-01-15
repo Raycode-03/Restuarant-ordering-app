@@ -1,15 +1,13 @@
 "use client";
-
 import { TriangleAlert } from "lucide-react";
-import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
+import LogoutButton from "@/components/auth/logoutButton"
+
 export default function InactiveAccount() {
   const [requestSent, setRequestSent] = useState(false);
-
  const handleRequestActivation = async () => {
   const toastId = toast.loading("Sending activation request...");
-
   try {
     const response = await fetch('/api/admin/notifications/request-activation', {
       method: 'POST',
@@ -30,7 +28,6 @@ export default function InactiveAccount() {
     );
   }
 };
-
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">
@@ -74,12 +71,9 @@ export default function InactiveAccount() {
             {requestSent ? "Request Sent" : "Request Activation"}
           </button>
 
-          <Link
-            href="/admin/logout"
-            className="block w-full px-6 py-3 bg-gray-200 text-gray-700 font-medium rounded-md hover:bg-gray-300 transition"
-          >
-            Logout
-          </Link>
+          <LogoutButton className=" text-white rounded-md hover:bg-red-500 transition bg-red-600 opacity-92 w-full px-6 py-3">
+              Logout
+          </LogoutButton>
         </div>
       </div>
     </div>

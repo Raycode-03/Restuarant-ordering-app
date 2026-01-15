@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { UserProvider } from "@/context/UserContext";
+import InactiveAccount from "@/components/dashboard/InactiveStaff";
 export default async function AdminLayout({ 
   children 
 }: { 
@@ -26,6 +27,8 @@ export default async function AdminLayout({
   if (staffError || !staff )  redirect("/admin/unauthorized");
 
   if (staff.role !== "admin" && staff.role !== "staff")   redirect("/admin/unauthorized");
-
+  if (!staff.is_active) {
+    return <InactiveAccount />;
+  }
     return <UserProvider user={user} staff={staff}>{children}</UserProvider>;
 }
