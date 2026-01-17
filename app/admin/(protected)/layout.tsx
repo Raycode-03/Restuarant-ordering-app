@@ -2,6 +2,10 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { UserProvider } from "@/context/UserContext";
 import InactiveAccount from "@/components/dashboard/InactiveStaff";
+import { Providers } from "@/provider";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/dashboard/sidebar"
+import NavbarDashboard from "@/components/dashboard/navbarDashboard"
 export default async function AdminLayout({ 
   children 
 }: { 
@@ -30,5 +34,20 @@ export default async function AdminLayout({
   if (!staff.is_active) {
     return <InactiveAccount />;
   }
-    return <UserProvider user={user} staff={staff}>{children}</UserProvider>;
+  const NAVBAR_HEIGHT = 84; // Reduced for better spacing
+  const userRole = staff?.role || 'user'; 
+    return (
+      <SidebarProvider defaultOpen={false}>
+      <AppSidebar userRole={userRole} />
+      <SidebarInset>
+        <NavbarDashboard user={user} pageTitle="Admin Dashboard"/>
+        <UserProvider user={user} staff={staff}>
+          <div style={{ paddingTop: NAVBAR_HEIGHT }}>
+            <Providers>{children}</Providers>
+          </div>
+          
+        </UserProvider>
+      </SidebarInset>
+      </SidebarProvider>
+    )
 }

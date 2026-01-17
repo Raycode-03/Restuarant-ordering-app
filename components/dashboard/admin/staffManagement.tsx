@@ -1,64 +1,61 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Search, UserCheck, UserX, ShieldCheck } from 'lucide-react';
-import { toast } from 'sonner';
-
-type StaffType = {
-  _id: string;
-  name: string;
-  email: string;
-  image?: string;
-  role: 'staff' | 'admin';
-  isActive: boolean;
-  createdAt: string;
-};
-type StaffFilter = 'all' | 'staff' | 'admin' | 'active' | 'inactive';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { UsersSkeleton } from '../skeleton';
+import type { StaffType, StaffFilter } from '@/types';
+import { staffApi } from '@/lib/api';
+import { useApiMutation } from '@/hooks/useapimutation';
 
 const StaffManagement = () => {
-  const [staff, setStaff] = useState<StaffType[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<StaffFilter>('all');
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    fetchStaff();
-  }, []);
+  // ✅ Fetch staff list
+  const { 
+    data: staff = [], isLoading, error,   refetch } = useQuery({
+    queryKey: ['staff-management'],
+    queryFn: staffApi.getAll,
+    retry: 2,
+  });
 
-  const fetchStaff = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/admin/staff');
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch staff');
-      }
-      
-      const data = await response.json();
-      
-      // ✅ FIX: Ensure data is an array
-      if (Array.isArray(data)) {
-        setStaff(data);
-      } else {
-        console.error('Expected array but got:', data);
-        setStaff([]);
-        toast.error('Invalid data format received');
-      }
-    } catch (error) {
-      console.error('Failed to fetch staff:', error);
-      toast.error('Failed to load staff');
-      setStaff([]); // ✅ Set empty array on error
-    } finally {
-      setLoading(false);
+  // ✅ Mutations
+  const promoteMutation = useApiMutation(
+    staffApi.promote,
+    {
+      successMessage: 'Staff promoted to admin successfully',
+      errorMessage: 'Failed to promote staff',
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['staff-management'] });
+      },
     }
-  };
-  const handleFilterChange = (
-    e: React.ChangeEvent<HTMLSelectElement>
-  ) => {
-    setFilter(e.target.value as StaffFilter);
-  };
+  );
 
-  // Filter staff - safely handles empty array
-  const filteredStaff = staff.filter(member => {
+  const activateMutation = useApiMutation(
+    staffApi.activate,
+    {
+      successMessage: 'Staff activated successfully',
+      errorMessage: 'Failed to activate staff',
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['staff-management'] });
+      },
+    }
+  );
+
+  const deactivateMutation = useApiMutation(
+    staffApi.deactivate,
+    {
+      successMessage: 'Staff deactivated successfully',
+      errorMessage: 'Failed to deactivate staff',
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['staff-management'] });
+      },
+    }
+  );
+
+  // Filter staff
+  const filteredStaff = staff.filter((member: StaffType) => {
     const matchesSearch = 
       member.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
       member.email?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -73,69 +70,6 @@ const StaffManagement = () => {
     return matchesSearch && matchesFilter;
   });
 
-  const promoteToAdmin = async (staffId: string) => {
-    try {
-      const res = await fetch(`/api/admin/staff/promote`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ staffId }),
-      });
-      const data = await res.json();
-      
-      if (!res.ok) {
-        toast.error(data?.error || 'Error promoting staff to admin');
-      } else {
-        toast.success('Staff promoted to admin successfully');
-        fetchStaff();
-      }
-    } catch (error) {
-      console.error('Failed to promote staff:', error);
-      toast.error('Failed to promote staff');
-    }
-  };
-
-  const activateStaff = async (staffId: string) => {
-    try {
-      const res = await fetch(`/api/admin/staff/activate`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ staffId }),
-      });
-      const data = await res.json();
-      
-      if (!res.ok) {
-        toast.error(data?.error || 'Error activating staff');
-      } else {
-        toast.success('Staff activated successfully');
-        fetchStaff();
-      }
-    } catch (error) {
-      console.error('Failed to activate staff:', error);
-      toast.error('Failed to activate staff');
-    }
-  };
-
-  const deactivateStaff = async (staffId: string) => {
-    try {
-      const res = await fetch(`/api/admin/staff/deactivate`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ staffId }),
-      });
-      const data = await res.json();
-      
-      if (!res.ok) {
-        toast.error(data?.error || 'Error deactivating staff');
-      } else {
-        toast.success('Staff deactivated successfully');
-        fetchStaff();
-      }
-    } catch (error) {
-      console.error('Failed to deactivate staff:', error);
-      toast.error('Failed to deactivate staff');
-    }
-  };
-
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-GB', {
@@ -145,12 +79,24 @@ const StaffManagement = () => {
     });
   };
 
-  if (loading) {
+  // ✅ Use isLoading from React Query
+  if (isLoading) {
+    return <UsersSkeleton />;
+  }
+
+  if (error) {
     return (
-      <div className="space-y-4">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="animate-pulse bg-gray-200 dark:bg-gray-700 h-20 rounded-lg"></div>
-        ))}
+      <div className="flex flex-col items-center justify-center p-8 space-y-4">
+        <div className="text-red-600 text-center">
+          <p className="font-semibold text-lg">Failed to load staff</p>
+          <p className="text-sm mt-1">{error.message}</p>
+        </div>
+        <button 
+          onClick={() => refetch()}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+        >
+          Try Again
+        </button>
       </div>
     );
   }
@@ -170,19 +116,17 @@ const StaffManagement = () => {
           />
         </div>
         
-        <div className="flex gap-2">
-          <select
-            value={filter}
-            onChange={handleFilterChange}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-          >
-            <option value="all">All Staff</option>
-            <option value="staff">Staff Only</option>
-            <option value="admin">Admins Only</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
-        </div>
+        <select
+          value={filter}
+          onChange={(e) => setFilter(e.target.value as StaffFilter)}
+          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+        >
+          <option value="all">All Staff</option>
+          <option value="staff">Staff Only</option>
+          <option value="admin">Admins Only</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
       </div>
 
       {/* Staff Table */}
@@ -210,13 +154,11 @@ const StaffManagement = () => {
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {filteredStaff.length > 0 ? (
-                filteredStaff.map((member) => (
+                filteredStaff.map((member: StaffType) => (
                   <tr key={member._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="px-4 py-4">
                       <div className="flex items-center">
-            
                         <div className="ml-3 min-w-0 flex-1">
-                      
                           <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
                             {member.email}
                           </div>
@@ -246,30 +188,31 @@ const StaffManagement = () => {
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex space-x-2">
-                        {/* Promote to Admin */}
                         {member.role === 'staff' && member.isActive && (
                           <button
-                            onClick={() => promoteToAdmin(member._id)}
-                            className="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300"
+                            onClick={() => promoteMutation.mutateWithToast(member._id)}
+                            disabled={promoteMutation.isPending}
+                            className="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300 disabled:opacity-50"
                             title="Promote to Admin"
                           >
                             <ShieldCheck className="w-4 h-4" />
                           </button>
                         )}
                         
-                        {/* Activate/Deactivate */}
                         {member.isActive ? (
                           <button
-                            onClick={() => deactivateStaff(member._id)}
-                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                            onClick={() => deactivateMutation.mutateWithToast(member._id)}
+                            disabled={deactivateMutation.isPending}
+                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 disabled:opacity-50"
                             title="Deactivate Staff"
                           >
                             <UserX className="w-4 h-4" />
                           </button>
                         ) : (
                           <button
-                            onClick={() => activateStaff(member._id)}
-                            className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
+                            onClick={() => activateMutation.mutateWithToast(member._id)}
+                            disabled={activateMutation.isPending}
+                            className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 disabled:opacity-50"
                             title="Activate Staff"
                           >
                             <UserCheck className="w-4 h-4" />
@@ -303,19 +246,19 @@ const StaffManagement = () => {
         </div>
         <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border border-purple-100 dark:border-purple-800">
           <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-            {staff.filter(s => s.role === 'admin').length}
+            {staff.filter((s: StaffType) => s.role === 'admin').length}
           </div>
           <div className="text-sm text-purple-600 dark:text-purple-400">Admins</div>
         </div>
         <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-100 dark:border-green-800">
           <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-            {staff.filter(s => s.isActive).length}
+            {staff.filter((s: StaffType) => s.isActive).length}
           </div>
           <div className="text-sm text-green-600 dark:text-green-400">Active</div>
         </div>
         <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-100 dark:border-red-800">
           <div className="text-2xl font-bold text-red-600 dark:text-red-400">
-            {staff.filter(s => !s.isActive).length}
+            {staff.filter((s: StaffType)=> !s.isActive).length}
           </div>
           <div className="text-sm text-red-600 dark:text-red-400">Inactive</div>
         </div>

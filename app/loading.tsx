@@ -1,24 +1,40 @@
-import React from 'react'
-import Image from 'next/image'
+"use client"
+import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
+
 function Loading() {
-      
+  const [progress, setProgress] = useState(0);
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 100) return 0;
+        return prev + 3;
+      });
+    }, 50);
+    return () => clearInterval(interval);
+  }, []);
+  
   return (
     <main className="fixed inset-0 z-50 bg-black flex items-center justify-center">
-      <div className="flex flex-col items-center text-center">
-        
-            <div className="w-full max-w-lg mx-auto">
-  <Image 
-    src={"/logos/svg.png"} 
-    alt='Loading image' 
-    width={203} 
-    height={203} 
-    className='animate-pulse w-full max-[460px]:px-12 h-auto invert'
-  />
-</div>
-        
+      <div className="relative w-60 h-60 flex items-center justify-center">
+        {/* Glow */}
+        <div className="absolute inset-0 blur-2xl opacity-30">
+          <div className="w-full h-full bg-linear-to-br from-blue-500 to-purple-600 rounded-full animate-pulse" />
+        </div>
+
+        {/* Logo */}
+        <Image
+          src="/logos/svg.png"
+          alt="Loading"
+          fill
+          priority
+          className="object-contain invert animate-float"
+        />
       </div>
+
     </main>
-  )
+  );
 }
 
-export default Loading
+export default Loading;

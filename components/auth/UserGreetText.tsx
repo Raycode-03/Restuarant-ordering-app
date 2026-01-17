@@ -1,13 +1,7 @@
 "use client";
 import { createClient } from "@/utils/supabase/client";
 import React, { useEffect, useState } from "react";
-
-interface UserProfile {
-  id: string;
-  full_name?: string;
-  email?: string;
-}
-
+import type { UserProfile } from '@/types'; 
 const UserGreetText = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const supabase = createClient();

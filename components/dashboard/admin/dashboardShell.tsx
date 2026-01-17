@@ -1,6 +1,5 @@
 "use client";
 import React, { useState } from "react";
-
 type CardConfig<T extends string> = {
   key: T;
   title: string;
@@ -16,7 +15,6 @@ type DashboardShellProps<T extends string> = {
   cards: CardConfig<T>[];
   sections: Record<T, React.ReactNode>;
   loading?: boolean;
-  skeleton?: React.ReactNode;
 };
 
 export function DashboardShell<T extends string>({
@@ -24,12 +22,10 @@ export function DashboardShell<T extends string>({
   subtitle,
   cards,
   sections,
-  loading,
-  skeleton
+  
 }: DashboardShellProps<T>) {
   const [activeSection, setActiveSection] = useState<T>(cards[0].key);
 
-  if (loading) return <>{skeleton}</>;
 
   return (
     <div className="mx-auto p-6 space-y-6 w-full max-w-full">
@@ -45,9 +41,9 @@ export function DashboardShell<T extends string>({
           <div
             key={card.key}
             onClick={() => setActiveSection(card.key)}
-            className={`p-6 rounded-xl border cursor-pointer transition
+            className={`p-6 rounded-xl border cursor-pointer transition hover:ring-4 hover:ring-blue-300
               ${activeSection === card.key ? "ring-4 ring-blue-400" : ""}
-              bg-white dark:bg-gray-800`}
+              bg-white  dark:bg-gray-800`}
           >
             {card.icon}
             <h3 className="font-semibold mt-2">{card.title}</h3>

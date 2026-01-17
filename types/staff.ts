@@ -1,11 +1,20 @@
-export type StaffRow = {
+export interface StaffMember {
   id: string;
-  name: string;
-  email: string;
-  password: string;
-  image: string | null;
   role: 'staff' | 'admin';
   is_active: boolean;
-  created_at: string;
-  updated_at: string;
-};
+  email?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface StaffType {
+  _id: string;
+  name: string;
+  email: string;
+  image?: string;
+  role: 'staff' | 'admin';
+  isActive: boolean;
+  createdAt: string;
+}
+
+export type StaffFilter = 'all' | 'staff' | 'admin' | 'active' | 'inactive';

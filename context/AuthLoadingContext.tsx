@@ -1,14 +1,6 @@
 "use client";
-
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-
-type LoadingType = 'form' | 'google' | 'github' | null;
-
-interface AuthLoadingContextType {
-  loadingType: LoadingType;
-  setLoadingType: (type: LoadingType) => void;
-}
-
+import type { LoadingType, AuthLoadingContextType } from '@/types';
 const AuthLoadingContext = createContext<AuthLoadingContextType | undefined>(undefined);
 
 export function AuthLoadingProvider({ children }: { children: ReactNode }) {
