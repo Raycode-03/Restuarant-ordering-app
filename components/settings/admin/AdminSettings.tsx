@@ -3,7 +3,9 @@ import React, { useState, useEffect, useRef } from 'react'
 import { toast } from 'sonner';
 import { QrCode, Printer, Plus, Minus, Copy, RefreshCw } from 'lucide-react';
 import QRCode from 'qrcode';
-
+import { settingsApi } from '@/lib/api/settings';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import Image from 'next/image';
 interface TableQR {
   tableNumber: number;
   qrCodeUrl: string;
@@ -11,41 +13,64 @@ interface TableQR {
 }
 
 function AdminSettings() {
-  const [loading, setLoading] = useState({
-    fetch: true,
-    generate: false,
-    updateCode: false,
-  });
-
+  const queryClient = useQueryClient();
   const [tableCount, setTableCount] = useState(10);
-  const [paymentCode, setPaymentCode] = useState('');
   const [newPaymentCode, setNewPaymentCode] = useState('');
   const [qrCodes, setQrCodes] = useState<TableQR[]>([]);
   const [showQRGrid, setShowQRGrid] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
 
+  // Fetch settings
+  const { data: settings, isLoading, isError } = useQuery({
+    queryKey: ['restaurant-settings'],
+    queryFn: settingsApi.getSettings
+  });
+
+  // Show error toast
   useEffect(() => {
-    fetchSettings();
-  }, []);
-
-  const fetchSettings = async () => {
-    try {
-      const response = await fetch('/api/admin/settings');
-      const result = await response.json();
-
-      if (response.ok && result.success) {
-        setTableCount(result.data.tableCount || 10);
-        setPaymentCode(result.data.paymentCode || '');
-      } else {
-        toast.error('Failed to load settings');
-      }
-    } catch (error) {
-      console.error('Error fetching settings:', error);
-      toast.error('Error loading settings');
-    } finally {
-      setLoading(prev => ({ ...prev, fetch: false }));
+    if (isError) {
+      toast.error('Failed to load settings');
     }
-  };
+  }, [isError]);
+
+  // Update table count when settings are loaded
+  useEffect(() => {
+    if (settings?.success && settings.data) {
+      setTableCount(settings.data.table_count || 10);
+    }
+  }, [settings]);
+
+  const paymentCode = settings?.data?.order_code?.toString() || '0000';
+
+  // Update payment code mutation
+  const updatePaymentMutation = useMutation({
+    mutationFn: (code: number) => settingsApi.paymentChange(code),
+    onSuccess: () => {
+      toast.success('Payment code updated successfully!');
+      queryClient.invalidateQueries({ queryKey: ['restaurant-settings'] });
+      setNewPaymentCode('');
+      // Regenerate QR codes with new payment code
+      if (showQRGrid) {
+        generateQRCodes();
+      }
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to update payment code');
+    }
+  });
+
+  // Update table count mutation
+  const updateTableCountMutation = useMutation({
+    mutationFn: (count: number) => settingsApi.tableNumberChange(count),
+    onSuccess: () => {
+      toast.success(`Generated ${tableCount} QR codes successfully!`);
+      queryClient.invalidateQueries({ queryKey: ['restaurant-settings'] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to update table count');
+    }
+  });
 
   const generateQRCodes = async () => {
     if (tableCount < 1 || tableCount > 100) {
@@ -53,13 +78,12 @@ function AdminSettings() {
       return;
     }
 
-    setLoading(prev => ({ ...prev, generate: true }));
+    setGenerating(true);
     
     try {
       const qrs: TableQR[] = [];
       
       for (let i = 1; i <= tableCount; i++) {
-        // Generate QR code data - this would be your app URL with table number
         const qrData = `${window.location.origin}/order?table=${i}`;
         const qrCodeUrl = await QRCode.toDataURL(qrData, {
           width: 300,
@@ -73,18 +97,21 @@ function AdminSettings() {
         qrs.push({
           tableNumber: i,
           qrCodeUrl,
-          paymentCode: paymentCode || '0000'
+          paymentCode: paymentCode
         });
       }
 
+      // Update table count in database
+      await updateTableCountMutation.mutateAsync(tableCount);
+      
       setQrCodes(qrs);
       setShowQRGrid(true);
-      toast.success(`Generated ${tableCount} QR codes successfully!`);
+      
     } catch (error) {
       console.error('Error generating QR codes:', error);
       toast.error('Failed to generate QR codes');
     } finally {
-      setLoading(prev => ({ ...prev, generate: false }));
+      setGenerating(false);
     }
   };
 
@@ -126,7 +153,7 @@ function AdminSettings() {
     }
   };
 
-  const updatePaymentCode = async () => {
+  const handleUpdatePaymentCode = () => {
     if (!newPaymentCode.trim()) {
       toast.error('Please enter a payment code');
       return;
@@ -137,36 +164,7 @@ function AdminSettings() {
       return;
     }
 
-    setLoading(prev => ({ ...prev, updateCode: true }));
-
-    try {
-      const response = await fetch('/api/admin/settings/payment-code', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ paymentCode: newPaymentCode }),
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        toast.success('Payment code updated successfully!');
-        setPaymentCode(newPaymentCode);
-        setNewPaymentCode('');
-        // Regenerate QR codes with new payment code
-        if (showQRGrid) {
-          generateQRCodes();
-        }
-      } else {
-        toast.error('Failed to update payment code: ' + result.error);
-      }
-    } catch (error) {
-      console.error('Error updating payment code:', error);
-      toast.error('Error updating payment code');
-    } finally {
-      setLoading(prev => ({ ...prev, updateCode: false }));
-    }
+    updatePaymentMutation.mutate(parseInt(newPaymentCode));
   };
 
   const copyPaymentCode = () => {
@@ -174,7 +172,7 @@ function AdminSettings() {
     toast.success('Payment code copied to clipboard!');
   };
 
-  if (loading.fetch) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center p-4">
         <div className="text-center">
@@ -202,7 +200,6 @@ function AdminSettings() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Table Count Input */}
             <div>
               <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
                 Number of Tables
@@ -234,14 +231,13 @@ function AdminSettings() {
               </p>
             </div>
 
-            {/* Generate Button */}
             <div className="flex flex-col justify-end">
               <button
                 onClick={generateQRCodes}
-                disabled={loading.generate}
+                disabled={generating}
                 className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
               >
-                {loading.generate ? (
+                {generating ? (
                   <>
                     <RefreshCw className="w-4 h-4 animate-spin" />
                     Generating QR Codes...
@@ -256,7 +252,6 @@ function AdminSettings() {
             </div>
           </div>
 
-          {/* Print Button - Shows after generation */}
           {showQRGrid && qrCodes.length > 0 && (
             <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
               <button
@@ -280,7 +275,6 @@ function AdminSettings() {
           </h2>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Current Payment Code */}
             <div>
               <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
                 Current Payment Code
@@ -305,7 +299,6 @@ function AdminSettings() {
               </p>
             </div>
 
-            {/* Update Payment Code */}
             <div>
               <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
                 New Payment Code
@@ -323,11 +316,11 @@ function AdminSettings() {
                   className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg text-center text-2xl font-mono font-bold text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 tracking-widest focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 />
                 <button
-                  onClick={updatePaymentCode}
-                  disabled={loading.updateCode || newPaymentCode.length !== 4}
+                  onClick={handleUpdatePaymentCode}
+                  disabled={updatePaymentMutation.isPending || newPaymentCode.length !== 4}
                   className="absolute right-2 top-1/2 -translate-y-1/2 bg-green-600 hover:bg-green-700 text-white text-xs font-medium px-4 py-2 rounded-md transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
-                  {loading.updateCode ? 'Updating...' : 'Update'}
+                  {updatePaymentMutation.isPending ? 'Updating...' : 'Update'}
                 </button>
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
@@ -337,8 +330,6 @@ function AdminSettings() {
           </div>
         </div>
 
-       
-
         {/* Hidden Print Section */}
         <div style={{ display: 'none' }}>
           <div ref={printRef}>
@@ -346,7 +337,7 @@ function AdminSettings() {
               {qrCodes.map((qr) => (
                 <div key={qr.tableNumber} className="qr-card">
                   <div className="table-number">Table {qr.tableNumber}</div>
-                  <img src={qr.qrCodeUrl} alt={`Table ${qr.tableNumber}`} />
+                  <Image src={qr.qrCodeUrl} alt={`Table ${qr.tableNumber}`} fill />
                   <div className="payment-code">
                     Payment Code: <strong>{qr.paymentCode}</strong>
                   </div>

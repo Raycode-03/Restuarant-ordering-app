@@ -1,12 +1,13 @@
 // app/api/admin/staff/route.ts
-// GET & POST with Supabase
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
-import bcrypt from 'bcryptjs';
 
 export async function GET(req: NextRequest) {
+  
   try {
     const supabase = await createClient()
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { data: staff, error } = await supabase
       .from('staff')
       .select('id, email, role, is_active, created_at')
@@ -38,79 +39,3 @@ export async function GET(req: NextRequest) {
     );
   }
 }
-
-// export async function POST(req: NextRequest) {
-//   try {
-//     const body = await req.json();
-    
-    
-
-//     // Check if email already exists
-//     const { data: existingStaff } = await supabaseAdmin
-//       .from('staff')
-//       .select('email')
-//       .eq('email', validatedData.email)
-//       .single();
-
-//     if (existingStaff) {
-//       return NextResponse.json(
-//         { error: 'Email already in use' },
-//         { status: 400 }
-//       );
-//     }
-
-//     // Hash password
-//     const hashedPassword = await bcrypt.hash(validatedData.password, 10);
-
-//     // Create staff
-//     const { data: newStaff, error } = await supabaseAdmin
-//       .from('staff')
-//       .insert({
-//         name: validatedData.name,
-//         email: validatedData.email,
-//         password: hashedPassword,
-//         image: validatedData.image,
-//         role: validatedData.role,
-//         is_active: validatedData.is_active,
-//       })
-//       .select('id, name, email, image, role, is_active, created_at')
-//       .single();
-
-//     if (error) {
-//       console.error('Supabase error:', error);
-//       return NextResponse.json(
-//         { error: 'Failed to create staff' },
-//         { status: 500 }
-//       );
-//     }
-
-//     return NextResponse.json(
-//       { 
-//         message: 'Staff created successfully', 
-//         staff: {
-//           _id: newStaff.id,
-//           name: newStaff.name,
-//           email: newStaff.email,
-//           image: newStaff.image,
-//           role: newStaff.role,
-//           isActive: newStaff.is_active,
-//           createdAt: newStaff.created_at,
-//         }
-//       },
-//       { status: 201 }
-//     );
-//   } catch (error: any) {
-//     if (error.name === 'ZodError') {
-//       return NextResponse.json(
-//         { error: 'Validation failed', details: error.errors },
-//         { status: 400 }
-//       );
-//     }
-
-//     console.error('Error creating staff:', error);
-//     return NextResponse.json(
-//       { error: 'Failed to create staff' },
-//       { status: 500 }
-//     );
-//   }
-// }

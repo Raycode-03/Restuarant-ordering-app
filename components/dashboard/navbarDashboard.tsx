@@ -3,10 +3,7 @@ import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Bell, LogOut, User } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
-import { Sun, Moon } from "lucide-react";
-import { useTheme } from "next-themes";
 import { toast } from 'sonner';
-import { useRouter } from "next/navigation"
 import  Link from "next/link";
 interface NavbarProps {
     user?: {
@@ -19,19 +16,10 @@ interface NavbarProps {
 }
 
 export default function NavbarDashboard({ user, pageTitle = "dashboard"}: NavbarProps) {
-    const { theme, setTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
-    const router = useRouter();
     useEffect(() => setMounted(true), []);
-    const toggleTheme = () => {
-        setTheme(prev => prev === 'light' ? 'dark' : 'light');
-    };
-    
+
     const isMobileDevice = useIsMobile()
-    const [query, setQuery] = useState("");
-    const [showSearchResults, setShowSearchResults] = useState(false);
-    const [loading, setLoading] = useState(false)
-    const [keywords, setKeywords] = useState([])
     const [showSearchMobile, setShowSearchMobile] = useState(false)
     const [showUserMenu, setShowUserMenu] = useState(false);
     
@@ -40,24 +28,10 @@ export default function NavbarDashboard({ user, pageTitle = "dashboard"}: Navbar
     
     const searchRef = useRef<HTMLDivElement>(null)
     const userMenuRef = useRef<HTMLDivElement>(null)
-    const mobileSearchOverlayRef = useRef<HTMLDivElement>(null)
-    const searchInputRef = useRef<HTMLInputElement>(null)
-    const mobileSearchInputRef = useRef<HTMLInputElement>(null)
     // Close handlers
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
              const target = e.target as Node;
-            // Close search results when clicking outside
-            if (!isMobileDevice && searchRef.current && !searchRef.current.contains(target)) {
-                setShowSearchResults(false);
-            }
-            
-           // For mobile - close when clicking outside the entire overlay
-            if (showSearchMobile && mobileSearchOverlayRef.current && !mobileSearchOverlayRef.current.contains(target)) {
-                setShowSearchMobile(false);
-                setShowSearchResults(false);
-                setQuery("");
-            }
             
              // Close user menu when clicking outside
             if (showUserMenu && userMenuRef.current && !userMenuRef.current.contains(target)) {
