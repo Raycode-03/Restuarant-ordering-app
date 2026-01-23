@@ -7,7 +7,6 @@ export default function MenuAnalysis() {
     { name: "Chicken Burger", orders: 38, revenue: 570 },
     { name: "Caesar Salad", orders: 32, revenue: 384 },
   ];
-
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Menu Analytics</h2>

@@ -12,7 +12,6 @@ export async function PUT(req: NextRequest) {
     }
     
     const body = await req.json();
-    console.log(body);
     const { table_count } = body;
     
     // Validate table count
@@ -27,8 +26,7 @@ export async function PUT(req: NextRequest) {
     const { data: currentRestaurant } = await supabase
       .from('restaurant')
       .select('id')
-      .limit(1)
-      .single();
+      .maybeSingle();
     
     if (!currentRestaurant) {
       return NextResponse.json(
@@ -56,9 +54,42 @@ export async function PUT(req: NextRequest) {
       );
     }
 
+    // Delete all existing tables for this restaurant
+    await supabase
+      .from('tables')
+      .delete()
+      .eq('restaurant_id', currentRestaurant.id);
+
+    // Create new table records
+    const tablesToInsert = [];
+    for (let i = 1; i <= table_count; i++) {
+      tablesToInsert.push({
+        table_number: i,
+        restaurant_id: currentRestaurant.id,
+        is_occupied: false
+      });
+    }
+
+    // Insert all tables at once
+    const { data: tables, error: tablesError } = await supabase
+      .from('tables')
+      .insert(tablesToInsert)
+      .select();
+
+    if (tablesError) {
+      console.error('Tables insert error:', tablesError);
+      return NextResponse.json(
+        { success: false, error: 'Failed to create table records' },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json({ 
       success: true, 
-      data: restaurant 
+      data: {
+        restaurant,
+        tables
+      }
     }, { status: 200 });
     
   } catch (error) {

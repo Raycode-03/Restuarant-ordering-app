@@ -10,7 +10,6 @@ export async function PUT(req: NextRequest) {
     if (userError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    
     const body = await req.json();
     console.log(body);
     const { order_code } = body;

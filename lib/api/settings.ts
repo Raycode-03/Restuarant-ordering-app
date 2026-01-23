@@ -13,7 +13,7 @@ export const settingsApi = {
     }
     return res.json();
   },
-
+  
   paymentChange: async (order_code: number): Promise<ApiResponse<RestaurantSettings>> => { 
     const res = await fetch('/api/admin/settings/payment-code', {
       method: 'PUT',

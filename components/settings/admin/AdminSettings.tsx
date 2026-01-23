@@ -77,7 +77,7 @@ function AdminSettings() {
       toast.error('Table count must be between 1 and 100');
       return;
     }
-
+  
     setGenerating(true);
     
     try {
