@@ -23,11 +23,11 @@ export function useSessionActivity({
   } = useQuery({
     queryKey: ['session', 'validate'],
     queryFn: sessionsApi.validateSession,
-    enabled: false, // manual only
+    enabled: false,
     retry: false,
   });
 
-  // Handle session errors (v5 way)
+
   useEffect(() => {
     if (!isError || !(error instanceof Error)) return;
 
