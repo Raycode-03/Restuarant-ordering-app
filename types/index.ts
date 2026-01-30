@@ -21,3 +21,7 @@ export type {
   LoadingType, 
   AuthLoadingContextType 
 } from './auth';
+export type {
+  MenuItem,
+  MenuItemWithRestaurant 
+} from './menu'
