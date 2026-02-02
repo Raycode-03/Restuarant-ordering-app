@@ -23,5 +23,7 @@ export type {
 } from './auth';
 export type {
   MenuItem,
+  CreateMenuItem,
+  UpdateMenuItem,
   MenuItemWithRestaurant 
 } from './menu'

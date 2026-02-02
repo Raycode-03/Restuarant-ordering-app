@@ -3,7 +3,6 @@ import React,{ useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { sessionsApi } from '@/lib/api/sessions';
-import  OrdersHome from "@/components/users/orders/ordersHome"
 interface PageProps {
   params: Promise<{ table: string }>; 
 }
@@ -63,7 +62,6 @@ export default function OrderPage({ params }: PageProps) {
         Table {tableNumber}
       </h1>
 
-      <OrdersHome/>
     </div>
   );
 }

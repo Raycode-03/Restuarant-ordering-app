@@ -1,10 +1,12 @@
 'use client';
 import React, { useState } from 'react';
 import { Upload, Download, X, AlertCircle } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { MenuItem } from '@/types';
+import { CreateMenuItem } from '@/types';
+import { menuApi } from '@/lib/api';
 
-interface ParsedMenuItem extends MenuItem {
+interface ParsedMenuItem extends CreateMenuItem {
   rowNumber: number;
 }
 
@@ -17,7 +19,24 @@ export default function BulkUploadMenu() {
   const [file, setFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<ParsedMenuItem[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
-  const [uploading, setUploading] = useState(false);
+  const queryClient = useQueryClient();
+
+  const bulkUploadMutation = useMutation({
+    mutationFn: (items: CreateMenuItem[]) => menuApi.bulkUploadMenus(items),
+    onSuccess: ( variables ) => {
+      toast.success(`Successfully added ${variables.length} items!`);
+      queryClient.invalidateQueries({ queryKey: ['menus'] });
+      
+      // Reset form
+      setShowUpload(false);
+      setFile(null);
+      setParsedData([]);
+      setErrors([]);
+    },
+    onError: (error: Error) => {
+      toast.error('Upload failed: ' + error.message);
+    },
+  });
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -94,63 +113,30 @@ export default function BulkUploadMenu() {
       return;
     }
 
-    setUploading(true);
-
     // Show loading toast
-    const loadingToast = toast.loading(`Uploading ${parsedData.length} items...`);
+    toast.loading(`Uploading ${parsedData.length} items...`, {
+      id: 'bulk-upload',
+    });
 
-    try {
-      const items: MenuItem[] = parsedData.map(item => ({
-        name: item.name,
-        description: item.description || '',
-        price: item.price,
-        category: item.category,
-        image_url: item.image_url || '',
-        video_url: item.video_url || '',
-        is_veg: item.is_veg,
-        is_vegan: item.is_vegan,
-        is_available: item.is_available
-      }));
+    const items: CreateMenuItem[] = parsedData.map(item => ({
+      name: item.name,
+      description: item.description || '',
+      price: item.price,
+      category: item.category,
+      image_url: item.image_url || '',
+      video_url: item.video_url || '',
+      is_veg: item.is_veg,
+      is_vegan: item.is_vegan,
+      is_available: item.is_available
+    }));
 
-      const response = await fetch('/api/admin/menu/bulk-upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items })
-      });
-
-      const result = await response.json();
-
-      // Dismiss loading toast
-      toast.dismiss(loadingToast);
-
-      if (!response.ok) {
-        // Show error from server
-        toast.error(result.error || 'Upload failed');
-        return; // Stop here, don't show success
-      }
-
-      // Only show success if response is OK
-      toast.success(`Successfully added ${parsedData.length} items!`);
-      
-      // Reset and refresh page
-      setShowUpload(false);
-      setFile(null);
-      setParsedData([]);
-      setErrors([]);
-      
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-      
-    } catch (error) {
-      // Dismiss loading toast
-      toast.dismiss(loadingToast);
-      
-      const errorMessage = error instanceof Error ? error.message : 'Upload failed';
-      toast.error('Upload failed: ' + errorMessage);
-    } finally {
-      setUploading(false);
-    }
+    // Trigger mutation
+    bulkUploadMutation.mutate(items, {
+      onSettled: () => {
+        // Dismiss loading toast on success or error
+        toast.dismiss('bulk-upload');
+      },
+    });
   };
 
   const downloadTemplate = () => {
@@ -168,7 +154,6 @@ Chapman,Refreshing fruit cocktail,800,Beverages,,,true,true,true`;
     a.download = 'menu_items_template.csv';
     a.click();
   };
-
   return (
     <div className="mb-6">
       {/* Upload Button */}
@@ -261,10 +246,10 @@ Chapman,Refreshing fruit cocktail,800,Beverages,,,true,true,true`;
             <div className="flex justify-center">
               <button
                 onClick={handleBulkUpload}
-                disabled={uploading}
+                disabled={bulkUploadMutation.isPending || errors.length > 0}
                 className="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
               >
-                {uploading ? 'Uploading...' : `Upload ${parsedData.length} Items`}
+                {bulkUploadMutation.isPending ? 'Uploading...' : `Upload ${parsedData.length} Items`}
               </button>
             </div>
           )}

@@ -1,4 +1,3 @@
-// components/menu/EditMenuCard.tsx
 "use client"
 import React, { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
@@ -35,17 +34,20 @@ function EditMenuCard({ menuitem, onSuccess, onCancel }: EditMenuCardProps) {
   
   const [mediaFile, setMediaFile] = useState<File | null>(null)
   const [mediaType, setMediaType] = useState<'image' | 'video' | null>(null)
-  const [mediaPreview, setMediaPreview] = useState<string>(
-    menuitem.image_url || menuitem.video_url || ''
-  )
+  const [mediaPreview, setMediaPreview] = useState<string>('')
 
-  // Detect existing media type
+  // ✅ FIXED: Only set media if it exists, don't force a type
   useEffect(() => {
-    if (menuitem.image_url) setMediaType('image');
-    else if (menuitem.video_url) setMediaType('video');
+    if (menuitem.image_url) {
+      setMediaType('image');
+      setMediaPreview(menuitem.image_url);
+    } else if (menuitem.video_url) {
+      setMediaType('video');
+      setMediaPreview(menuitem.video_url);
+    }
+    // If neither exists, leave everything null/empty
   }, [menuitem]);
 
-  // ✅ Mutation
   const editMutation = useMutation({
     mutationFn: (formDataToSend: FormData) => menuApi.editMenu(formDataToSend),
     onSuccess: () => {
@@ -58,7 +60,6 @@ function EditMenuCard({ menuitem, onSuccess, onCancel }: EditMenuCardProps) {
     },
   });
 
-  // Close on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
@@ -85,8 +86,6 @@ function EditMenuCard({ menuitem, onSuccess, onCancel }: EditMenuCardProps) {
     }
     
     const formDataToSend = new FormData()
-    
-    // ✅ CRITICAL: Add ID first
     formDataToSend.append('id', menuitem._id)
     formDataToSend.append('name', formData.name)
     formDataToSend.append('description', formData.description)
@@ -96,7 +95,7 @@ function EditMenuCard({ menuitem, onSuccess, onCancel }: EditMenuCardProps) {
     formDataToSend.append('is_vegan', formData.is_vegan.toString())
     formDataToSend.append('is_available', formData.is_available.toString())
     
-    // Add media if new file selected
+    // Only add media if new file selected
     if (mediaFile && mediaType) {
       formDataToSend.append('media', mediaFile)
       formDataToSend.append('mediaType', mediaType)
@@ -113,7 +112,6 @@ function EditMenuCard({ menuitem, onSuccess, onCancel }: EditMenuCardProps) {
     const file = e.target.files?.[0]
     if (!file) return;
 
-    // Validate file type
     const isImage = file.type.startsWith('image/');
     const isVideo = file.type.startsWith('video/');
     
@@ -122,7 +120,6 @@ function EditMenuCard({ menuitem, onSuccess, onCancel }: EditMenuCardProps) {
       return
     }
 
-    // Validate file size (50MB limit)
     const maxSize = 50 * 1024 * 1024; // 50MB
     if (file.size > maxSize) {
       toast.error('File size must be less than 50MB')
@@ -133,7 +130,6 @@ function EditMenuCard({ menuitem, onSuccess, onCancel }: EditMenuCardProps) {
     setMediaFile(file)
     setMediaType(type)
     
-    // Create preview
     const reader = new FileReader()
     reader.onload = (e) => {
       setMediaPreview(e.target?.result as string)
@@ -141,10 +137,22 @@ function EditMenuCard({ menuitem, onSuccess, onCancel }: EditMenuCardProps) {
     reader.readAsDataURL(file)
   }
 
+  // ✅ FIXED: Clear to original state OR completely empty
   const clearMedia = () => {
     setMediaFile(null)
-    setMediaPreview(menuitem.image_url || menuitem.video_url || '')
-    setMediaType(menuitem.image_url ? 'image' : menuitem.video_url ? 'video' : null)
+    
+    // Reset to original menu item media if it exists
+    if (menuitem.image_url) {
+      setMediaPreview(menuitem.image_url)
+      setMediaType('image')
+    } else if (menuitem.video_url) {
+      setMediaPreview(menuitem.video_url)
+      setMediaType('video')
+    } else {
+      // No original media, clear everything
+      setMediaPreview('')
+      setMediaType(null)
+    }
   }
 
   return (
@@ -222,9 +230,9 @@ function EditMenuCard({ menuitem, onSuccess, onCancel }: EditMenuCardProps) {
             />
           </div>
 
-          {/* Media Upload */}
+          {/* Media Upload - Optional */}
           <div className="space-y-3">
-            <Label>Media (Image or Video)</Label>
+            <Label>Media (Optional)</Label>
             <div 
               className="relative border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:border-gray-400 transition"
               onClick={() => !editMutation.isPending && document.getElementById('mediaFile')?.click()}
@@ -274,18 +282,25 @@ function EditMenuCard({ menuitem, onSuccess, onCancel }: EditMenuCardProps) {
                   <div className="flex items-center justify-center gap-2 text-sm text-blue-600">
                     {mediaType === 'video' ? <Video className="w-4 h-4" /> : <ImageIcon className="w-4 h-4" />}
                     <span>
-                      {mediaFile ? `New ${mediaType} - Click to change` : `Current ${mediaType} - Click to change`}
+                      {mediaFile 
+                        ? `New ${mediaType} selected - Click to change` 
+                        : `Current ${mediaType} - Click to change`}
                     </span>
                   </div>
                 </div>
               ) : (
+                // ✅ Empty state - no media
                 <div className="py-8">
                   <div className="flex justify-center gap-4 mb-3">
                     <ImageIcon className="w-10 h-10 text-gray-400" />
                     <span className="text-gray-300">or</span>
                     <Video className="w-10 h-10 text-gray-400" />
                   </div>
-                  <p className="text-sm font-medium">Select image or video</p>
+                  <p className="text-sm font-medium text-gray-700">
+                    {menuitem.image_url || menuitem.video_url 
+                      ? 'Click to change media' 
+                      : 'Click to add image or video'}
+                  </p>
                   <p className="text-xs text-gray-400 mt-1">
                     Images: PNG, JPG, GIF | Videos: MP4, WebM
                   </p>
@@ -295,7 +310,7 @@ function EditMenuCard({ menuitem, onSuccess, onCancel }: EditMenuCardProps) {
             </div>
           </div>
 
-          {/* Checkboxes */}
+          {/* Dietary Options */}
           <div className="flex gap-4">
             <label className="flex items-center gap-2">
               <input

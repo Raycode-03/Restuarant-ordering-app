@@ -1,6 +1,6 @@
 import React from 'react';
 import MenuList from "@/components/menu/menulist";
-import BulkUploadMenu from "@/components/menu/BulkUploadMenu";
+import BulkUploadMenu from "@/components/menu/bulkUploadMenu";
 
 export default function MenuPage() {
   return (

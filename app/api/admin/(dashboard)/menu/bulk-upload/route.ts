@@ -1,13 +1,16 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
-import { MenuItemWithRestaurant  , MenuItem} from "@/types";
+import { MenuItemWithRestaurant  , CreateMenuItem} from "@/types";
 
 export async function POST(request: Request) {
   try {
+    
     console.log("Received POST request for bulk upload");
     const supabase = await createClient();
-    const body = await request.json();
-
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    
+      const body = await request.json();
     // Validate items array
     if (!body.items || !Array.isArray(body.items) || body.items.length === 0) {
       return NextResponse.json(
@@ -31,7 +34,7 @@ export async function POST(request: Request) {
     }
 
     // Add restaurant_id to each item
-    const itemsWithRestaurant: MenuItemWithRestaurant[] = body.items.map((item: MenuItem) => ({
+    const itemsWithRestaurant: MenuItemWithRestaurant[] = body.items.map((item: CreateMenuItem) => ({
       ...item,
       restaurant_id: restaurant.id // Extract just the id, not the whole object
     }));
