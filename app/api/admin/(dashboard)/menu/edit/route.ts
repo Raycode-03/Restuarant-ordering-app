@@ -29,6 +29,10 @@ async function uploadMediaToCloudinary(file: File, folder: string) {
     const isImage = file.type.startsWith("image/");
     const isVideo = file.type.startsWith("video/");
 
+    const folderPath = isImage
+  ? `${folder}/images`
+  : `${folder}/videos`;
+
     if (!isImage && !isVideo) {
       throw new Error("Only image or video files are allowed");
     }
@@ -38,7 +42,7 @@ async function uploadMediaToCloudinary(file: File, folder: string) {
     const dataUri = `data:${file.type};base64,${base64}`;
 
     const result = await cloudinary.uploader.upload(dataUri, {
-      folder,
+      folder:folderPath,
       resource_type: isVideo ? "video" : "image",
       timeout: isVideo ? 120_000 : 60_000,
       quality: "auto:best",
@@ -61,13 +65,16 @@ async function uploadMediaToCloudinary(file: File, folder: string) {
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  
 ) {
   try {
     const supabase = await createClient();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    
     const formData = await request.formData();
 
-    const id = params.id;
+    const id = formData.get("id");
 
     const name = String(formData.get("name") || "");
     const description = String(formData.get("description") || "");
@@ -102,7 +109,7 @@ export async function PUT(
       try {
         const upload = await uploadMediaToCloudinary(
           mediaFile,
-          "menu-items"
+          "savory-restaurant-app"
         );
 
         if (upload.type === "image") {

@@ -6,13 +6,11 @@ export const sessionsApi = {
       body: JSON.stringify({ table_number: tableNumber }),
       credentials: 'include',
     });
-
     const data = await res.json();
 
     if (!res.ok) {
       throw new Error(data.error || 'Failed to start session');
     }
-
     return data;
   },
 

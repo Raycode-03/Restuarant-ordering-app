@@ -3,12 +3,13 @@ import { NextResponse } from "next/server";
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
 ) {
   try {
     const supabase = await createClient();
-    const id = params.id;
-
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const body = await request.json();
+    const id = body.id;
     const { error } = await supabase
       .from('menu_items')
       .delete()

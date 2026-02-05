@@ -1,6 +1,7 @@
 // app/order/[table]/layout.tsx
 import SessionProvider from './SessionProvider';
 import { Providers } from "@/provider";
+import NavbarDashboard from '@/components/users/navbarDashboard';
 interface LayoutProps {
   children: React.ReactNode;
   params: Promise<{ table: string }>;
@@ -15,10 +16,13 @@ export default async function OrderLayout({ children, params }: LayoutProps) {
   }
 
   return (
-
+    
     <Providers>
       <SessionProvider tableNumber={tableNumber}>
-        {children}
+        <div>
+          <NavbarDashboard tableNumber={tableNumber}/>
+            {children}
+        </div>
       </SessionProvider>
     </Providers>
 

@@ -88,4 +88,5 @@ export async function GET() {
     .eq('id', session.id);
 
   return NextResponse.json({ session });
+
 }

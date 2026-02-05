@@ -4,7 +4,7 @@ import { Upload, Download, X, AlertCircle } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { CreateMenuItem } from '@/types';
-import { menuApi } from '@/lib/api';
+import { adminMenuApi } from '@/lib/api';
 
 interface ParsedMenuItem extends CreateMenuItem {
   rowNumber: number;
@@ -22,7 +22,7 @@ export default function BulkUploadMenu() {
   const queryClient = useQueryClient();
 
   const bulkUploadMutation = useMutation({
-    mutationFn: (items: CreateMenuItem[]) => menuApi.bulkUploadMenus(items),
+    mutationFn: (items: CreateMenuItem[]) => adminMenuApi.bulkUploadMenus(items),
     onSuccess: ( variables ) => {
       toast.success(`Successfully added ${variables.length} items!`);
       queryClient.invalidateQueries({ queryKey: ['menus'] });

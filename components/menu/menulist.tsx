@@ -1,358 +1,166 @@
-// components/menu/EditMenuCard.tsx
-"use client"
-import React, { useState, useRef, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { X, Upload, Video, Image as ImageIcon } from 'lucide-react'
-import Image from 'next/image'
-import { toast } from "sonner"
-import { MenuItem } from '@/types'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { menuApi } from '@/lib/api'
+"use client";
 
-interface EditMenuCardProps {
-  menuitem: MenuItem
-  onSuccess: () => void
-  onCancel: () => void
-}
+import React, { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { adminMenuApi } from "@/lib/api";
+import { BooksSkeleton } from "@/components/dashboard/skeleton";
+import { CardContent, CardFooter } from "../ui/card";
+import { Button } from "../ui/button";
+import { toast } from "sonner";
+import MediaDisplay from "./mediaDisplay";
+import { MenuItem } from "@/types";
+import EditMenuCard from '@/components/menu/editMenuCard';
 
-function EditMenuCard({ menuitem, onSuccess, onCancel }: EditMenuCardProps) {
+const ITEMS_PER_PAGE = 10; 
+
+export default function MenuList() {
   const queryClient = useQueryClient();
-  const formRef = useRef<HTMLDivElement>(null);
-  
-  const [formData, setFormData] = useState({
-    name: menuitem.name || '',
-    description: menuitem.description || '',
-    category: menuitem.category || '',
-    price: menuitem.price || 0,   
-    is_veg: menuitem.is_veg || false,
-    is_vegan: menuitem.is_vegan || false,
-    is_available: menuitem.is_available ?? true,
-  })
-  
-  const [mediaFile, setMediaFile] = useState<File | null>(null)
-  const [mediaType, setMediaType] = useState<'image' | 'video' | null>(null)
-  const [mediaPreview, setMediaPreview] = useState<string>(
-    menuitem.image_url || menuitem.video_url || ''
-  )
+  const [editData, setEditData] = useState<MenuItem | null>(null);
+  const [page, setPage] = useState(0); 
+  // Fetch menus for current page
+  const { data: menus = [], isLoading, error } = useQuery({
+    queryKey: ['menus', page],
+  queryFn: () => adminMenuApi.getMenus(page, ITEMS_PER_PAGE),
+    staleTime: 10 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+    retry: 1,
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+  });
 
-  // Detect existing media type
-  useEffect(() => {
-    if (menuitem.image_url) setMediaType('image');
-    else if (menuitem.video_url) setMediaType('video');
-  }, [menuitem]);
-
-  // ✅ Mutation
+  // Edit Mutation
   const editMutation = useMutation({
-    mutationFn: (formDataToSend: FormData) => menuApi.editMenu(formDataToSend),
+    mutationFn: async (formData: FormData) => {
+      const loadingToast = toast.loading('Updating menu item...');
+      try {
+        const result = await menuApi.editMenu(formData);
+        toast.dismiss(loadingToast);
+        return result;
+      } catch (error) {
+        toast.dismiss(loadingToast);
+        throw error;
+      }
+    },
     onSuccess: () => {
-      toast.success("Menu item updated successfully!")
-      queryClient.invalidateQueries({ queryKey: ['menus'] })
-      onSuccess()
+      toast.success('Menu updated successfully!');
+      queryClient.invalidateQueries({ queryKey: ['menus', page] });
+      setEditData(null);
     },
     onError: (error: Error) => {
-      toast.error(`Failed to update: ${error.message}`)
+      toast.error(error?.message || 'Failed to update menu');
     },
   });
 
-  // Close on outside click
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (
-        target.closest('[data-radix-select-trigger]') ||
-        target.closest('[data-radix-select-content]')
-      ) {
-        return;
+  // Delete Mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const loadingToast = toast.loading('Deleting menu item...');
+      try {
+        const result = await adminMenuApi.deleteMenu(id);
+        toast.dismiss(loadingToast);
+        return result;
+      } catch (error) {
+        toast.dismiss(loadingToast);
+        throw error;
       }
-      if (formRef.current && !formRef.current.contains(target)) {
-        onCancel();
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [onCancel]);
+    },
+    onSuccess: () => {
+      toast.success('Menu deleted successfully!');
+      queryClient.invalidateQueries({ queryKey: ['menus', page] });
+    },
+    onError: (error: Error) => {
+      toast.error(error?.message || 'Failed to delete menu');
+    },
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!formData.name || !formData.category || !formData.description || !formData.price) {
-      toast.error('Please fill in all required fields')
-      return
-    }
-    
-    const formDataToSend = new FormData()
-    
-    // ✅ CRITICAL: Add ID first
-    formDataToSend.append('id', menuitem._id)
-    formDataToSend.append('name', formData.name)
-    formDataToSend.append('description', formData.description)
-    formDataToSend.append('price', formData.price.toString())
-    formDataToSend.append('category', formData.category)
-    formDataToSend.append('is_veg', formData.is_veg.toString())
-    formDataToSend.append('is_vegan', formData.is_vegan.toString())
-    formDataToSend.append('is_available', formData.is_available.toString())
-    
-    // Add media if new file selected
-    if (mediaFile && mediaType) {
-      formDataToSend.append('media', mediaFile)
-      formDataToSend.append('mediaType', mediaType)
-    }
-    
-    editMutation.mutate(formDataToSend)
-  }
+  const handleEdit = (formData: FormData) => editMutation.mutate(formData);
+  const handleDelete = (id: string) => deleteMutation.mutate(id);
 
-  const handleChange = (field: string, value: string | number | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-  }
+  const prevPage = () => setPage(old => Math.max(old - 1, 0));
+  const nextPage = () => setPage(old => old + 1);
 
-  const handleMediaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return;
+  if (isLoading) { return ( <div className="w-full"> <BooksSkeleton /> </div> ); }
 
-    // Validate file type
-    const isImage = file.type.startsWith('image/');
-    const isVideo = file.type.startsWith('video/');
-    
-    if (!isImage && !isVideo) {
-      toast.error('Please select an image or video file')
-      return
-    }
-
-    // Validate file size (50MB limit)
-    const maxSize = 50 * 1024 * 1024; // 50MB
-    if (file.size > maxSize) {
-      toast.error('File size must be less than 50MB')
-      return
-    }
-    
-    const type = isImage ? 'image' : 'video';
-    setMediaFile(file)
-    setMediaType(type)
-    
-    // Create preview
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      setMediaPreview(e.target?.result as string)
-    }
-    reader.readAsDataURL(file)
-  }
-
-  const clearMedia = () => {
-    setMediaFile(null)
-    setMediaPreview(menuitem.image_url || menuitem.video_url || '')
-    setMediaType(menuitem.image_url ? 'image' : menuitem.video_url ? 'video' : null)
+  if (error) {
+    toast.error("Failed to load menus");
+    return null;
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div 
-        className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto" 
-        ref={formRef}
-      >
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Edit Menu Item</h2>
-          <button 
-            onClick={onCancel} 
-            className="text-gray-500 hover:text-gray-700"
-            disabled={editMutation.isPending}
+    <>
+      {/* Edit Modal */}
+      {editData && (
+        <EditMenuCard
+          menuitem={editData}
+          open={!!editData}
+          onSubmit={handleEdit}
+          onCancel={() => setEditData(null)}
+          isLoading={editMutation.isPending}
+        />
+      )}
+
+      {/* Menu Grid */}
+      <div className="w-full max-w-7xl mx-auto grid gap-6 grid-cols-2 sm:grid-cols-2 lg:grid-cols-4">
+        {menus.map((menu) => (
+          <div
+            key={menu._id}
+            className="group overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:shadow-lg"
           >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="name">Name *</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => handleChange('name', e.target.value)}
-              required
-              disabled={editMutation.isPending}
+            <MediaDisplay
+              video_url={menu.video_url}
+              image_url={menu.image_url}
+              alt={menu.name}
             />
-          </div>
 
-          <div>
-            <Label htmlFor="category">Category *</Label>
-            <Select
-              value={formData.category}
-              onValueChange={(value) => handleChange('category', value)}
-              disabled={editMutation.isPending}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Appetizer">Appetizer</SelectItem>
-                <SelectItem value="Main Course">Main Course</SelectItem>
-                <SelectItem value="Dessert">Dessert</SelectItem>
-                <SelectItem value="Beverages">Beverages</SelectItem>
-                <SelectItem value="Sides">Sides</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+            <CardContent className="p-4 space-y-2">
+              <h3 className="text-base font-semibold line-clamp-1">{menu.name}</h3>
+              <p className="text-sm text-muted-foreground line-clamp-2">{menu.description}</p>
+              <p className="text-lg font-bold text-blue-600">₦{menu.price.toLocaleString()}</p>
+            </CardContent>
 
-          <div>
-            <Label htmlFor="description">Description *</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => handleChange('description', e.target.value)}
-              rows={3}
-              required
-              disabled={editMutation.isPending}
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="price">Price (₦) *</Label>
-            <Input
-              id="price"
-              type="number"
-              min="0"
-              step="0.01"
-              value={formData.price}
-              onChange={(e) => handleChange('price', parseFloat(e.target.value) || 0)}
-              required
-              disabled={editMutation.isPending}
-            />
-          </div>
-
-          {/* Media Upload */}
-          <div className="space-y-3">
-            <Label>Media (Image or Video)</Label>
-            <div 
-              className="relative border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:border-gray-400 transition"
-              onClick={() => !editMutation.isPending && document.getElementById('mediaFile')?.click()}
-            >
-              <Input
-                id="mediaFile"
-                type="file"
-                accept="image/*,video/*"
-                onChange={handleMediaChange}
-                className="hidden"
+            <CardFooter className="p-4 pt-0 flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 h-10 cursor-pointer"
+                onClick={() => setEditData(menu)}
                 disabled={editMutation.isPending}
-              />
-
-              {mediaPreview ? (
-                <div className="relative w-full">
-                  <Button 
-                    type="button" 
-                    variant="secondary" 
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      clearMedia();
-                    }}
-                    className="absolute -top-2 -right-2 z-10 h-6 w-6 p-0 rounded-full"
-                    disabled={editMutation.isPending}
-                  >
-                    <X className="w-3 h-3" />
-                  </Button>
-                  
-                  <div className="relative w-full h-48 rounded-md overflow-hidden mb-3 bg-gray-100">
-                    {mediaType === 'video' ? (
-                      <video 
-                        src={mediaPreview} 
-                        controls 
-                        className="w-full h-full object-contain"
-                      />
-                    ) : (
-                      <Image
-                        src={mediaPreview}
-                        alt="Preview"
-                        fill
-                        className="object-contain"
-                      />
-                    )}
-                  </div>
-                  
-                  <div className="flex items-center justify-center gap-2 text-sm text-blue-600">
-                    {mediaType === 'video' ? <Video className="w-4 h-4" /> : <ImageIcon className="w-4 h-4" />}
-                    <span>
-                      {mediaFile ? `New ${mediaType} - Click to change` : `Current ${mediaType} - Click to change`}
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <div className="py-8">
-                  <div className="flex justify-center gap-4 mb-3">
-                    <ImageIcon className="w-10 h-10 text-gray-400" />
-                    <span className="text-gray-300">or</span>
-                    <Video className="w-10 h-10 text-gray-400" />
-                  </div>
-                  <p className="text-sm font-medium">Select image or video</p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Images: PNG, JPG, GIF | Videos: MP4, WebM
-                  </p>
-                  <p className="text-xs text-gray-400">Up to 50MB</p>
-                </div>
-              )}
-            </div>
+              >
+                Edit
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                className="flex-1 h-10 cursor-pointer"
+                onClick={() => handleDelete(menu._id)}
+                disabled={deleteMutation.isPending}
+              >
+                {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+              </Button>
+            </CardFooter>
           </div>
-
-          {/* Checkboxes */}
-          <div className="flex gap-4">
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={formData.is_veg}
-                onChange={(e) => handleChange('is_veg', e.target.checked)}
-                className="w-4 h-4"
-                disabled={editMutation.isPending}
-              />
-              <span className="text-sm">Vegetarian</span>
-            </label>
-            
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={formData.is_vegan}
-                onChange={(e) => handleChange('is_vegan', e.target.checked)}
-                className="w-4 h-4"
-                disabled={editMutation.isPending}
-              />
-              <span className="text-sm">Vegan</span>
-            </label>
-            
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={formData.is_available}
-                onChange={(e) => handleChange('is_available', e.target.checked)}
-                className="w-4 h-4"
-                disabled={editMutation.isPending}
-              />
-              <span className="text-sm">Available</span>
-            </label>
-          </div>
-
-          <div className="flex gap-2 pt-4">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onCancel}
-              className="flex-1"
-              disabled={editMutation.isPending}
-            >
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={editMutation.isPending} 
-              className="flex-1"
-            >
-              {editMutation.isPending ? 'Updating...' : 'Update Menu'}
-            </Button>
-          </div>
-        </form>
+        ))}
       </div>
-    </div>
-  )
-}
 
-export default EditMenuCard
+      {/* Pagination */}
+      <div className="flex justify-center items-center gap-4 mt-6">
+        <Button
+          size="sm"
+          onClick={prevPage}
+          disabled={page === 0}
+        >
+          Prev
+        </Button>
+        <span>Page {page + 1}</span>
+        <Button
+          size="sm"
+          onClick={nextPage}
+          disabled={menus.length < ITEMS_PER_PAGE} // disable next if less than 10 items
+        >
+          Next
+        </Button>
+      </div>
+    </>
+  );
+}
