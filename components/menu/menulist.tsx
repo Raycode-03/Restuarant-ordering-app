@@ -34,7 +34,7 @@ export default function MenuList() {
     mutationFn: async (formData: FormData) => {
       const loadingToast = toast.loading('Updating menu item...');
       try {
-        const result = await menuApi.editMenu(formData);
+        const result = await adminMenuApi.editMenu(formData);
         toast.dismiss(loadingToast);
         return result;
       } catch (error) {

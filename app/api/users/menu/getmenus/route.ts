@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
 
     const { data: menus, error } = await supabase
       .from('menu_items')
-      .select('id,price,name,category,description,image_url,video_url,is_available,created_at')
+      .select('id,price,name,category,description,image_url,video_url,is_available,created_at,is_veg ,is_vegan')
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
@@ -32,6 +32,8 @@ export async function GET(req: NextRequest) {
       category: m.category,
       image_url: m.image_url,
       video_url: m.video_url,
+      is_veg:m.is_veg,
+      is_vegan:m.is_vegan,
       is_available: m.is_available,
       created_at: m.created_at,
     }));

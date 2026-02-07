@@ -1,4 +1,4 @@
-// app/order/[table]/SessionProvider.tsx
+// app/menu/[table]/SessionProvider.tsx
 'use client';
 
 import { useSessionActivity } from '@/hooks/useSessionActivity';
@@ -29,7 +29,7 @@ export default function SessionProvider({
     });
 
     setTimeout(() => {
-      router.push(`/order/${tableNumber}`); // Re-navigate to trigger new session
+      router.push(`/menu/${tableNumber}`); // Re-navigate to trigger new session
       router.refresh();
     }, 2000);
   }, [isRefreshing, router, tableNumber]);
@@ -45,7 +45,7 @@ export default function SessionProvider({
     });
 
     setTimeout(() => {
-      router.push(`/order/${tableNumber}`);
+      router.push(`/menu/${tableNumber}`);
       router.refresh();
     }, 2000);
   }, [isRefreshing, router, tableNumber]);

@@ -8,5 +8,17 @@ export const menuApi = {
       throw new Error('Failed to fetch menus');
     }
     return res.json();
+  },
+  addCart: async (menuId: string): Promise<void> => {
+    const res = await fetch(`/api/users/cart/add`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ menuId }),
+    });
+    if (!res.ok) {
+      throw new Error('Failed to add item to cart');
+    }
   }
 }

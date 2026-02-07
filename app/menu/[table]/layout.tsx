@@ -1,4 +1,4 @@
-// app/order/[table]/layout.tsx
+// app/menu/[table]/layout.tsx
 import SessionProvider from './SessionProvider';
 import { Providers } from "@/provider";
 import NavbarDashboard from '@/components/users/navbarDashboard';

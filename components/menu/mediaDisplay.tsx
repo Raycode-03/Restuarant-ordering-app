@@ -27,6 +27,7 @@ function MediaDisplay({ video_url, image_url, alt }: MediaDisplayProps) {
           src={image_url}
           alt={alt}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          
         />
       ) : (
         /* Priority 3: Fallback */
