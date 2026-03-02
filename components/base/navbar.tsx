@@ -24,16 +24,17 @@ function Navbar() {
   }, []);
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled
-        ? 'bg-white/90 backdrop-blur-md shadow-sm border-b border-gray-100'
-        : 'bg-transparent'
-      }`}>
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+  scrolled
+    ? 'bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100'
+    : 'bg-white/80 backdrop-blur-sm'
+}`}>
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
 
         {/* Logo */}
-        <div className="relative h-10 w-[136px]">
+        <div className="relative h-20 w-[156px]">
           <Link href={'/'}>
-            <Image src="/logos/svg.png" alt="logo" fill className="object-contain" />
+            <Image src="/logos/savory_icon.png" alt="logo" fill className="object-contain" />
           </Link>
         </div>
 

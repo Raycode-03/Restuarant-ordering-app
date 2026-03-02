@@ -84,7 +84,7 @@ export function AppSidebar({ userRole }) {
           <Link href="/">
             <div className="flex items-center gap-3">
               <Image
-                src="/logos/svg.png"
+                src="/logos/savory_icon.png"
                 alt="Savory & co logo"
                 width={120}
                 height={120}

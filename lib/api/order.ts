@@ -8,6 +8,7 @@ export const orderApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tableNumber }),
     });
+    if (res.status === 401) throw new Error('Session expired');
     if (!res.ok) throw new Error('Failed to create checkout');
     return res.json();
   },
@@ -18,6 +19,7 @@ export const orderApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tableNumber }),
     });
+    if (res.status === 401) throw new Error('Session expired');
     if (!res.ok) throw new Error('Failed to place order');
     return res.json();
   },

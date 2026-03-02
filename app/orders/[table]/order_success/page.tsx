@@ -57,7 +57,7 @@ export default function OrderSuccessPage() {
           {DOTS.map((dot, i) => (
             <span
               key={i}
-              className={`absolute rounded-full bg-[#16A34A] transition-all duration-500 ${dot.size} ${
+            className={`absolute rounded-full bg-[#16A34A] transition-all duration-500 ${dot.size} ${
                 dotsVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-0'
               }`}
               style={{ top: dot.top, left: dot.left, transitionDelay: dot.delay }}
@@ -84,7 +84,7 @@ export default function OrderSuccessPage() {
 
         <div ref={btnsRef} className="flex gap-3">
           <Link
-            href={`/order/${tableNumber}`}
+            href={`/orders/${tableNumber}`}
             className="flex-1 py-2.5 text-sm font-semibold bg-gray-100 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors"
           >
             View Order

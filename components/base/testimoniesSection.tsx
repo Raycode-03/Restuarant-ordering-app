@@ -32,8 +32,8 @@ export default function TestimoniesSection() {
   const item = testimonies.items[activeIndex];
 
   return (
-    <section id="testimories" className="py-16 px-4 bg-gray-50">
-      <div className="max-w-2xl mx-auto">
+    <section id="testimories" className="py-16 px-4 bg-gray-50 overflow-hidden">
+  <div className="max-w-4xl mx-auto ">
 
         {/* Header */}
         <div ref={titleRef} className="text-center mb-10">
@@ -51,7 +51,7 @@ export default function TestimoniesSection() {
               : 'translate-x-0 opacity-100'
               }`}
           >
-            <div className="bg-white rounded-3xl border border-gray-200 p-6 shadow-sm">
+            <div className="bg-white rounded-3xl border border-gray-200 p-8 shadow-sm min-h-[230px] flex flex-col justify-between">
               {/* Stars */}
               <div className="flex gap-1 mb-4">
                 {Array.from({ length: 5 }).map((_, i) => (

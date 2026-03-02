@@ -4,6 +4,9 @@ export const adminMenuApi = {
   getMenus: async (page = 0, limit = 10): Promise<MenuItem[]> => {
     const offset = page * limit;
     const res = await fetch(`/api/admin/menu/getmenus?limit=${limit}&offset=${offset}`);
+    if (res.status === 401) {
+      throw new Error('Session expired'); 
+    }
     if (!res.ok) {
       throw new Error('Failed to fetch menus');
     }
@@ -20,6 +23,9 @@ export const adminMenuApi = {
       method: 'PUT',
       body: formData, 
     });
+    if (res.status === 401) {
+      throw new Error('Session expired'); 
+    }
     if (!res.ok) {
       const error = await res.json();
       throw new Error(error.error || 'Failed to edit menu');
@@ -35,6 +41,9 @@ export const adminMenuApi = {
       },
       body: JSON.stringify({ id }),
     });
+    if (res.status === 401) {
+      throw new Error('Session expired'); 
+    }
     if (!res.ok) {
       throw new Error('Failed to delete menu');
     }
@@ -48,7 +57,9 @@ export const adminMenuApi = {
       },
       body: JSON.stringify({ items }),
     });
-    
+    if (res.status === 401) {
+      throw new Error('Session expired'); 
+    }
     if (!res.ok) {
       const error = await res.json();
       throw new Error(error.error || 'Failed to bulk upload menus');

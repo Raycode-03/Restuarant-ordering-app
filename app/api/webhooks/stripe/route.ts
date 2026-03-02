@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
+import { MenuItem } from '@/types';
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
-type MenuItemJoin = {
-  price: number;
-};
+type MenuItemJoin = Pick<MenuItem, 'price'>;
 
 type CartItemRow = {
   id: string;
@@ -18,10 +17,10 @@ type CartItemRow = {
 export async function POST(req: Request) {
   const body = await req.text();
   const sig = req.headers.get('stripe-signature')!;
-
   let event: Stripe.Event;
 
   try {
+
     event = stripe.webhooks.constructEvent(
       body,
       sig,
@@ -31,6 +30,7 @@ export async function POST(req: Request) {
     console.log(err);
     return NextResponse.json({ error: 'Webhook signature failed' }, { status: 400 });
   }
+  
 
   if (event.type === 'checkout.session.completed') {
     const checkoutSession = event.data.object as Stripe.Checkout.Session;
@@ -55,7 +55,7 @@ export async function POST(req: Request) {
       return sum + (menu?.price ?? 0) * item.quantity;
     }, 0);
 
-    const { data: order } = await supabase
+    const { data: order , error:orderError } = await supabase
       .from('orders')
       .insert({
         table_session_id: tableSessionId,
@@ -78,7 +78,6 @@ export async function POST(req: Request) {
         price: menu?.price ?? 0,
       };
     });
-
     await supabase.from('order_items').insert(orderItems);
 
     await supabase

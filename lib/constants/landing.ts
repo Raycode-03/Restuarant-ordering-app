@@ -147,7 +147,7 @@ export const faq = {
   ],
 };
 export const footer = {
-  icon: "/logos/svg.png",
+  icon: "/logos/savory_icon.png",
   links: {
     About: "#about",
     Testimonies: "#testimonies",

@@ -12,7 +12,7 @@ export interface OrderItem {
   id: string;
   quantity: number;
   price: number;
-  menu_items: { id: string; name: string; image_url: string } | { id: string; name: string; image_url: string }[] | null;
+  menu_items: { id: string; name: string; image_url: string; video_url:string;} | { id: string; name: string; image_url: string ; video_url: string;}[] | null;
 }
 
 export type OrderWithItems = Order & { order_items: OrderItem[] };

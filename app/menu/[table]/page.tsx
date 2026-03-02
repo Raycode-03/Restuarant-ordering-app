@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { sessionsApi, menuApi , cartApi } from '@/lib/api';
+import { sessionsApi, menuApi, cartApi } from '@/lib/api';
 import { BooksSkeleton } from '@/components/dashboard/skeleton';
 import { Button } from '@/components/ui/button';
 import { CardContent, CardFooter } from '@/components/ui/card';
@@ -23,7 +23,7 @@ export default function MenuPage({ params }: PageProps) {
   const [filter, setFilter] = useState<FilterType>('all');
   const ITEMS_PER_PAGE = 10;
   const queryClient = useQueryClient();
-  
+
   // Start session
   const {
     isLoading: isSessionLoading,
@@ -39,18 +39,18 @@ export default function MenuPage({ params }: PageProps) {
 
   // Add to cart mutation - MOVED TO TOP LEVEL
   const { mutate: addToCart, isPending: isAddingToCart } = useMutation({
-  mutationFn: (menuId: string) => cartApi.addCart(menuId),
-  onMutate: () => {
-    toast.loading('Adding to cart...', { id: 'cart-toast' });
-  },
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['cart'] });
-    toast.success('Added to cart!', { id: 'cart-toast' });
-  },
-  onError: (error: Error) => {
-    toast.error('Failed to add item', { id: 'cart-toast', description: error.message });
-  },
-});
+    mutationFn: (menuId: string) => cartApi.addCart(menuId),
+    onMutate: () => {
+      toast.loading('Adding to cart...', { id: 'cart-toast' });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
+      toast.success('Added to cart!', { id: 'cart-toast' });
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to add item', { id: 'cart-toast', description: error.message });
+    },
+  });
 
   // Handle cart click
   const handleCart = (menuId: string) => {
@@ -111,8 +111,8 @@ export default function MenuPage({ params }: PageProps) {
     }
   }, [menuError]);
   // Pull out menus array and total from response
-const menus = menusResponse?.data ?? [];
-const total = menusResponse?.total ?? 0;
+  const menus = menusResponse?.data ?? [];
+  const total = menusResponse?.total ?? 0;
 
   const hasMore = (page + 1) * ITEMS_PER_PAGE < total;
   const prevPage = () => setPage((old) => Math.max(old - 1, 0));
@@ -142,42 +142,42 @@ const total = menusResponse?.total ?? 0;
       {isSessionLoading && <Loading />}
 
       {/* Menu loader */}
-       {isMenuLoading && !isSessionLoading && <BooksSkeleton />}
+      {isMenuLoading && !isSessionLoading && <BooksSkeleton />}
 
       {/* Menu error */}
-       {menuError && (
+      {menuError && (
         <div className="text-red-500 text-center mt-6">Failed to load menus</div>
-      )} 
+      )}
 
       {!isSessionLoading && !isMenuLoading && (
-          <div className="flex items-center justify-between w-full mb-4 gap-4 flex-wrap">
-        {/* LEFT: Filters */}
-        <div className="flex gap-3 flex-wrap">
-          {(['all', 'veg', 'vegan'] as FilterType[]).map((f) => (
-            <Button
-              key={f}
-              size="sm"
-              variant={filter === f ? 'default' : 'outline'}
-              onClick={() => setFilter(f)}
-            >
-              {f.charAt(0).toUpperCase() + f.slice(1)}
-            </Button>
-          ))}
-        </div>
+        <div className="flex items-center justify-between w-full mb-4 gap-4 flex-wrap">
+          {/* LEFT: Filters */}
+          <div className="flex gap-3 flex-wrap">
+            {(['all', 'veg', 'vegan'] as FilterType[]).map((f) => (
+              <Button
+                key={f}
+                size="sm"
+                variant={filter === f ? 'default' : 'outline'}
+                onClick={() => setFilter(f)}
+              >
+                {f.charAt(0).toUpperCase() + f.slice(1)}
+              </Button>
+            ))}
+          </div>
 
-        {/* RIGHT: Search */}
-        <div>
-          <input
-            type="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full sm:w-72 p-2 border rounded-md"
-            placeholder="Search menu items..."
-          />
-      </div>
+          {/* RIGHT: Search */}
+          <div>
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full sm:w-72 p-2 border rounded-md"
+              placeholder="Search menu items..."
+            />
+          </div>
         </div>
       )}
-      
+
 
       {/* Menu grid */}
       {!isSessionLoading && !isMenuLoading && menus.length > 0 && (
@@ -186,7 +186,7 @@ const total = menusResponse?.total ?? 0;
             {filteredMenus.map((menu) => (
               <div
                 key={menu._id}
-                className="group overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:shadow-lg"
+                className="group flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:shadow-lg"
               >
                 <MediaDisplay
                   video_url={menu.video_url}
@@ -194,17 +194,24 @@ const total = menusResponse?.total ?? 0;
                   alt={menu.name}
                 />
 
-                <CardContent className="p-4 space-y-2">
-                  <h3 className="text-base font-semibold line-clamp-1">{menu.name}</h3>
+                <CardContent className="p-4 space-y-2 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="text-base font-semibold line-clamp-1">{menu.name}</h3>
+                    <p className="hidden md:block text-lg font-bold text-blue-600 shrink-0">
+                      ₦{menu.price.toLocaleString()}
+                    </p>
+                  </div>
+
                   <p className="text-sm text-muted-foreground line-clamp-2">
                     {menu.description}
                   </p>
-                  <p className="text-lg font-bold text-blue-600">
+
+                  <p className="md:hidden text-lg font-bold text-blue-600">
                     ₦{menu.price.toLocaleString()}
                   </p>
                 </CardContent>
 
-                <CardFooter className="p-4 pt-0 flex gap-2">
+                <CardFooter className="p-4 pt-0 mt-auto">
                   <Button
                     size="sm"
                     variant="outline"
@@ -222,8 +229,8 @@ const total = menusResponse?.total ?? 0;
 
           {/* Pagination */}
           <div className="flex justify-center items-center gap-4 mt-6">
-            <Button size="sm" onClick={prevPage} disabled={page === 0} 
-            className='cursor-pointer'>
+            <Button size="sm" onClick={prevPage} disabled={page === 0}
+              className='cursor-pointer'>
               Prev
             </Button>
             <span>Page {page + 1}</span>

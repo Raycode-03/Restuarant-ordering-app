@@ -6,7 +6,6 @@ import WhyUsSection from './whyUsSection'
 import TablesSection from './tableSection'
 import TestimoniesSection from './testimoniesSection'
 import FaqSection from './faqSection'
-import ContactSection from './contact'
 import Footer from './footer'
 function landingPage() {
   return (
@@ -18,7 +17,6 @@ function landingPage() {
       <WhyUsSection/>
       <TestimoniesSection/>
       <FaqSection/>
-      {/* <ContactSection/> */}
       <Footer/>
     </>
   )

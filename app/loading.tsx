@@ -25,7 +25,7 @@ function Loading() {
 
         
         <Image
-          src="/logos/svg.png"
+          src="/logos/savory_icon.png"
           alt="Loading"
           fill
           unoptimized 

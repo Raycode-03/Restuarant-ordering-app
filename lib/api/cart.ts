@@ -18,6 +18,9 @@ export const cartApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ menuId }),
     });
+    if (res.status === 401) {
+      throw new Error('Session expired'); 
+    }
     if (!res.ok) throw new Error('Failed to add item to cart');
     const data = await res.json();
     return data.item;
@@ -25,6 +28,9 @@ export const cartApi = {
 
   removeFromCart: async (cartItemId: string) => {
     const res = await fetch(`/api/users/cart/remove/${cartItemId}`, { method: 'DELETE' });
+    if (res.status === 401) {
+      throw new Error('Session expired'); 
+    }
     if (!res.ok) throw new Error('Failed to remove item');
     return res.json();
   },
@@ -35,6 +41,9 @@ export const cartApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ quantity }),
     });
+    if (res.status === 401) {
+      throw new Error('Session expired'); 
+    }
     if (!res.ok) throw new Error('Failed to update item');
     return res.json();
   },

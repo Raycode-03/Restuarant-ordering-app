@@ -51,7 +51,7 @@ export default function VerifyEmailPage() {
         {/* Logo - fixed at top-left corner */}
         <div className="absolute -top-12 left-6 z-10">
           <Image
-            src="/logos/svg.png"
+            src="/logos/savory_icon.png"
             alt="Savory logo"
             width={120}
             height={120}

@@ -75,6 +75,7 @@ return {
   quantity: item.quantity,
 };
 });
+
     const checkoutSession = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: lineItems,
@@ -86,12 +87,7 @@ return {
         tableNumber: String(tableNumber),
       },
     });
-     // 2. Clear the cart
-  await supabase
-    .from('cart_items')
-    .delete()
-    .eq('table_session_id', session.id);
-
+   
     return NextResponse.json({ url: checkoutSession.url });
 
   } catch (err) {

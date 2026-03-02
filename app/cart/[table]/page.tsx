@@ -177,12 +177,12 @@ function CartPage({ params }: PageProps) {
                       : updateQuantity({ cartItemId: item._id, quantity: item.quantity - 1 })
                   }
                   disabled={isItemBusy}
-                  className="w-8 h-8 rounded-full border flex items-center justify-center hover:bg-gray-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-8 h-8 rounded-full border flex items-center justify-center hover:bg-gray-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {isItemUpdating ? (
                     <Loader2 className="w-3 h-3 animate-spin" />
                   ) : (
-                    <Minus className="w-3 h-3" />
+                    <Minus className="w-3 h-3 " />
                   )}
                 </button>
 
@@ -197,7 +197,7 @@ function CartPage({ params }: PageProps) {
                     updateQuantity({ cartItemId: item._id, quantity: item.quantity + 1 })
                   }
                   disabled={isItemBusy}
-                  className="w-8 h-8 rounded-full border flex items-center justify-center hover:bg-gray-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-8 h-8 rounded-full border flex items-center justify-center hover:bg-gray-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {isItemUpdating ? (
                     <Loader2 className="w-3 h-3 animate-spin" />
@@ -210,7 +210,7 @@ function CartPage({ params }: PageProps) {
                 <button
                   onClick={() => removeFromCart(item._id)}
                   disabled={isItemBusy}
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-red-400 hover:bg-red-50 transition-colors ml-1 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-red-400 hover:bg-red-50 transition-colors ml-1 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {isItemRemoving ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -236,7 +236,7 @@ function CartPage({ params }: PageProps) {
             <span className="text-blue-600">₦{total.toLocaleString()}</span>
           </div>
         <Button
-          className="w-full h-12 bg-[#053c15]/95 text-white font-semibold rounded-xl hover:bg-[#053c05]/80"
+          className="w-full h-12 bg-[#16A34A] text-white font-semibold rounded-xl hover:hover:bg-[#15803D]/80 cursor-pointer"
           onClick={() => placeOrder()}
           disabled={isPlacingOrder || cart.length === 0}
         >

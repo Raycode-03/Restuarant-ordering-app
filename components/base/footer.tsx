@@ -9,7 +9,7 @@ export default function Footer() {
       <div className="max-w-2xl mx-auto flex flex-col items-center gap-6">
 
         {/* Logo */}
-        <div className="relative h-10 w-34">
+        <div className="relative h-16 w-34">
           <Image src={footer.icon} alt="logo" fill className="object-contain" />
         </div>
 

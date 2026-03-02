@@ -38,7 +38,7 @@ export default function Page() {
     
     {/* Logo */}
     <Image
-      src="/logos/svg.png"
+      src="/logos/savory_icon.png"
       alt="Savory logo"
       width={320}
       height={320}
