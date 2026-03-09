@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { landingTablesApi } from '@/lib/api';
-
+import { useNetworkError } from '@/hooks/useNetworkError';
 type TableStatus = 'vacant' | 'occupied' | 'active';
 
 interface Table {
@@ -63,13 +63,13 @@ export default function TablesPage() {
   const [selected, setSelected] = useState<number | null>(null);
 
   // Fetch tables from API
-  const { data, isLoading, error } = useQuery<TablesResponse>({
+  const { data, isLoading, isError, error } = useQuery<TablesResponse>({
     queryKey: ['tables'],
     queryFn: () => landingTablesApi.getTables(),
     staleTime: 1000 * 60 * 5, // 5 mins
     retry: 1,
   });
-
+  useNetworkError(!!isError, error, 'Failed to load tables');
   // Show toast if API fails
   useEffect(() => {
     if (!error) return;

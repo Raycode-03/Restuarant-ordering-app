@@ -8,6 +8,7 @@ import { TimeFilter, TIME_FILTERS, StatusFilter, OrderItem, OrderStatus, ORDER_S
 import { AnalyticsSkeleton } from '@/components/common/skeleton';
 import { Clock, ChefHat, PackageCheck, CheckCircle2, XCircle } from 'lucide-react';
 import OrderItemsModal from './orderItemsModal';
+import { useNetworkError } from '@/hooks/useNetworkError';
 const STATUS_CONFIG = {
   pending: { label: 'Pending', icon: Clock, color: 'text-yellow-500', bg: 'bg-yellow-50', border: 'border-yellow-200', dot: 'bg-yellow-400' },
   preparing: { label: 'Preparing', icon: ChefHat, color: 'text-blue-500', bg: 'bg-blue-50', border: 'border-blue-200', dot: 'bg-blue-400 animate-pulse' },
@@ -33,11 +34,12 @@ export default function AdminOrders() {
     return () => { supabase.removeChannel(channel); };
   }, [queryClient]);
 
-  const { data: orders = [], isLoading } = useQuery({
+  const { data: orders = [], isLoading , isError, error} = useQuery({
     queryKey: ['admin-orders'],
     queryFn: adminOrderApi.getAdminOrders,
     refetchInterval: 15000,
   });
+  useNetworkError(!!isError, error, 'Failed to load admin orders');
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ orderId, status }: { orderId: string; status: OrderStatus }) =>

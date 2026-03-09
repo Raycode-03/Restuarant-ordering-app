@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { useEffect } from 'react';
 import { OrderItem, OrderWithItems } from '@/types';
 import { OrderCardSkeleton } from '@/components/common/skeleton';
+import { useNetworkError } from '@/hooks/useNetworkError';
 interface PageProps {
   params: Promise<{ table: string }>;
 }
@@ -117,12 +118,14 @@ export default function OrdersPage({ params }: PageProps) {
   const tableNumber = Number(paramsData.table);
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { data: orders = [], isLoading, error } = useQuery<OrderWithItems[]>({
+  const { data: orders = [], isLoading,isError, error } = useQuery<OrderWithItems[]>({
     queryKey: ['orders', tableNumber],
     queryFn: () => orderApi.getOrders(),
     refetchInterval: 30 * 1000, // poll every 30s for status updates
     retry: 1,
   });
+  useNetworkError(!!isError, error, 'Failed to load orders');
+
   useEffect(() => {
     const supabase = createClient();
 

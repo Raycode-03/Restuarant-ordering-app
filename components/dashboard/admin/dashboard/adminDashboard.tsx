@@ -9,15 +9,16 @@ import RevenueAnalysis from "@/components/dashboard/admin/dashboard/revenueAnaly
 import { UsersBoxSkeleton } from "../../../common/skeleton";
 import { SectionKey} from "@/types";
 import { dashboardApi } from "@/lib/api";
+import { useNetworkError } from "@/hooks/useNetworkError";
 
 export default function AdminDashboard() {
-  const { data: stats, isLoading , error} = useQuery({
+  const { data: stats, isLoading , isError, error} = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: dashboardApi.getStats,
     refetchInterval: 30000,
     staleTime: 10000
   });
-
+  useNetworkError(!!isError, error, 'Failed to load dashboard stats');
   if (isLoading) {
     return (
       <UsersBoxSkeleton/>

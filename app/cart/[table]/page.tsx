@@ -10,6 +10,7 @@ import MediaDisplay from '@/components/common/mediaDisplay';
 import { CartItem } from '@/types';
 import { useRouter } from 'next/navigation';
 import { CartSkeleton } from '@/components/common/skeleton';
+import { useNetworkError } from '@/hooks/useNetworkError';
 interface PageProps {
   params: Promise<{ table: string }>;
 }
@@ -26,7 +27,7 @@ function CartPage({ params }: PageProps) {
   
   const {
     data: cart = [],
-    isLoading,
+    isLoading,isError,
     error,
   } = useQuery({
     queryKey: ['cart', tableNumber],
@@ -34,6 +35,8 @@ function CartPage({ params }: PageProps) {
     staleTime: 0,
     retry: 1,
   });
+  useNetworkError(!!isError, error, 'Failed to load cart');
+
   useEffect(() => {
   if (!error) return;
   if (error instanceof Error && error.message === 'Session expired') {

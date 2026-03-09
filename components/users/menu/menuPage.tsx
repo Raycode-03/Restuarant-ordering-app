@@ -9,6 +9,7 @@ import { CardContent, CardFooter } from '@/components/ui/card';
 import { ShoppingCart } from 'lucide-react';
 import MediaDisplay from '@/components/common/mediaDisplay';
 import Loading from '@/app/loading';
+import { useNetworkError } from '@/hooks/useNetworkError';
 interface PageProps {
   params: Promise<{ table: string }>;
 }
@@ -67,26 +68,7 @@ export default function MenuPage({ params }: PageProps) {
     }
   }, [isSessionSuccess, sessionCreated, tableNumber]);
 
-  useEffect(() => {
-    if (!isSessionError || !(sessionError instanceof Error)) return;
-
-    if (
-      !navigator.onLine ||
-      sessionError.message === 'NETWORK_ERROR' ||
-      sessionError.message.includes('Failed to fetch')
-    ) {
-      toast.error('Connection issue', {
-        description: 'Poor internet connection. Please check your network.',
-        duration: 1000,
-      });
-      return;
-    }
-
-    toast.error('Failed to create session', {
-      description: sessionError.message,
-    });
-  }, [isSessionError, sessionError]);
-
+  useNetworkError(isSessionError, sessionError, 'Failed to create session');
   // Menu query
   const {
     data: menusResponse,
@@ -103,13 +85,8 @@ export default function MenuPage({ params }: PageProps) {
     refetchOnReconnect: true,
   });
 
-  useEffect(() => {
-    if (menuError instanceof Error) {
-      toast.error('Failed to load menus', {
-        description: menuError.message,
-      });
-    }
-  }, [menuError]);
+  useNetworkError(!!menuError, menuError, 'Failed to load menus');
+
   // Pull out menus array and total from response
   const menus = menusResponse?.data ?? [];
   const total = menusResponse?.total ?? 0;

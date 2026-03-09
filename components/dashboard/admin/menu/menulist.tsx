@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import MediaDisplay from "../../../common/mediaDisplay";
 import { MenuItem } from "@/types";
 import EditMenuCard from '@/components/dashboard/admin/menu/editMenuCard';
+import { useNetworkError } from "@/hooks/useNetworkError";
 
 const ITEMS_PER_PAGE = 10; 
 
@@ -18,7 +19,7 @@ export default function MenuList() {
   const [editData, setEditData] = useState<MenuItem | null>(null);
   const [page, setPage] = useState(0); 
   // Fetch menus for current page
-  const { data: menus = [], isLoading, error } = useQuery({
+  const { data: menus = [], isLoading, isError, error } = useQuery({
     queryKey: ['menus', page],
   queryFn: () => adminMenuApi.getMenus(page, ITEMS_PER_PAGE),
     staleTime: 10 * 60 * 1000,
@@ -28,7 +29,7 @@ export default function MenuList() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
   });
-
+  useNetworkError(!!isError, error, 'Failed to load menus');
   // Edit Mutation
   const editMutation = useMutation({
     mutationFn: async (formData: FormData) => {

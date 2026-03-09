@@ -7,6 +7,8 @@ import { settingsApi } from '@/lib/api/adminSettings';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Image from 'next/image';
 import { TableQR, RestaurantSettings } from "@/types"
+import { useNetworkError } from '@/hooks/useNetworkError';
+
 function AdminSettings() {
   const queryClient = useQueryClient();
   const [tableCount, setTableCount] = useState(10);
@@ -16,46 +18,34 @@ function AdminSettings() {
   const [generating, setGenerating] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
 
-  // Fetch settings
-  const { data: settings, isLoading, isError } = useQuery<{ success: boolean; data: RestaurantSettings }>({
+  const { data: settings, isLoading, isError, error } = useQuery<RestaurantSettings>({
     queryKey: ['restaurant-settings'],
-    queryFn: settingsApi.getSettings
+    queryFn: settingsApi.getSettings,
   });
 
-  // Show error toast
-  useEffect(() => {
-    if (isError) {
-      toast.error('Failed to load settings');
-    }
-  }, [isError]);
+  useNetworkError(isError, error, 'Failed to load settings');
 
-  // Update table count when settings are loaded
   useEffect(() => {
-    if (settings?.success && settings.data) {
-      setTableCount(settings.data.table_count || 10);
+    if (settings?.table_count) {
+      setTableCount(settings.table_count);
     }
   }, [settings]);
 
-  const paymentCode = settings?.data?.order_code?.toString() || '0000';
+  const paymentCode = settings?.order_code?.toString() || '0000';
 
-  // Update payment code mutation
   const updatePaymentMutation = useMutation({
     mutationFn: (code: number) => settingsApi.paymentChange(code),
     onSuccess: () => {
       toast.success('Payment code updated successfully!');
       queryClient.invalidateQueries({ queryKey: ['restaurant-settings'] });
       setNewPaymentCode('');
-      // Regenerate QR codes with new payment code
-      if (showQRGrid) {
-        generateQRCodes();
-      }
+      if (showQRGrid) generateQRCodes();
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to update payment code');
     }
   });
 
-  // Update table count mutation
   const updateTableCountMutation = useMutation({
     mutationFn: (count: number) => settingsApi.tableNumberChange(count),
     onSuccess: () => {
@@ -79,29 +69,19 @@ function AdminSettings() {
       const qrs: TableQR[] = [];
 
       for (let i = 1; i <= tableCount; i++) {
-        const qrData = `${window.location.origin}/order?table=${i}`;
+        const qrData = `${window.location.origin}/menu/${i}`;
         const qrCodeUrl = await QRCode.toDataURL(qrData, {
           width: 300,
           margin: 2,
-          color: {
-            dark: '#000000',
-            light: '#FFFFFF'
-          }
+          color: { dark: '#000000', light: '#FFFFFF' }
         });
 
-        qrs.push({
-          tableNumber: i,
-          qrCodeUrl,
-          paymentCode: paymentCode
-        });
+        qrs.push({ tableNumber: i, qrCodeUrl, paymentCode });
       }
 
-      // Update table count in database
       await updateTableCountMutation.mutateAsync(tableCount);
-
       setQrCodes(qrs);
       setShowQRGrid(true);
-
     } catch (error) {
       console.error('Error generating QR codes:', error);
       toast.error('Failed to generate QR codes');
@@ -111,40 +91,38 @@ function AdminSettings() {
   };
 
   const handlePrint = () => {
-    if (printRef.current) {
-      const printContent = printRef.current.innerHTML;
-      const printWindow = window.open('', '_blank');
+    if (!printRef.current) return;
 
-      if (printWindow) {
-        printWindow.document.write(`
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <title>Table QR Codes</title>
-              <style>
-                @media print {
-                  body { margin: 0; padding: 20px; }
-                  .qr-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 40px; }
-                  .qr-card { page-break-inside: avoid; text-align: center; border: 2px solid #000; padding: 20px; }
-                  .qr-card img { width: 250px; height: 250px; }
-                  .table-number { font-size: 24px; font-weight: bold; margin: 10px 0; }
-                  .payment-code { font-size: 18px; margin: 10px 0; }
-                }
-                body { font-family: Arial, sans-serif; }
-              </style>
-            </head>
-            <body>
-              ${printContent}
-            </body>
-          </html>
-        `);
-        printWindow.document.close();
-        printWindow.focus();
-        setTimeout(() => {
-          printWindow.print();
-          printWindow.close();
-        }, 250);
-      }
+    const printContent = printRef.current.innerHTML;
+    const printWindow = window.open('', '_blank');
+
+    if (printWindow) {
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Table QR Codes</title>
+            <style>
+              @media print {
+                body { margin: 0; padding: 20px; }
+                .qr-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 40px; }
+                .qr-card { page-break-inside: avoid; text-align: center; border: 2px solid #000; padding: 20px; }
+                .qr-card img { width: 250px; height: 250px; }
+                .table-number { font-size: 24px; font-weight: bold; margin: 10px 0; }
+                .payment-code { font-size: 18px; margin: 10px 0; }
+              }
+              body { font-family: Arial, sans-serif; }
+            </style>
+          </head>
+          <body>${printContent}</body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 250);
     }
   };
 
@@ -153,25 +131,23 @@ function AdminSettings() {
       toast.error('Please enter a payment code');
       return;
     }
-
     if (!/^\d{4}$/.test(newPaymentCode)) {
       toast.error('Payment code must be exactly 4 digits');
       return;
     }
-
     updatePaymentMutation.mutate(parseInt(newPaymentCode));
   };
 
   const copyPaymentCode = () => {
     navigator.clipboard.writeText(paymentCode);
-    toast.success('Payment code copied to clipboard!');
+    toast.success('Payment code copied!');
   };
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center p-4">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto" />
           <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">Loading settings...</p>
         </div>
       </div>
@@ -185,7 +161,7 @@ function AdminSettings() {
           Restaurant Settings
         </h1>
 
-        {/* Table QR Code Generator Section */}
+        {/* QR Code Section */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-800 p-4 sm:p-6 md:p-8 mb-6">
           <div className="flex items-center gap-2 mb-6">
             <QrCode className="w-5 h-5 text-green-600" />
@@ -284,7 +260,6 @@ function AdminSettings() {
                 <button
                   onClick={copyPaymentCode}
                   className="absolute right-2 top-1/2 -translate-y-1/2 p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors"
-                  title="Copy payment code"
                 >
                   <Copy className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                 </button>
@@ -332,7 +307,7 @@ function AdminSettings() {
               {qrCodes.map((qr) => (
                 <div key={qr.tableNumber} className="qr-card">
                   <div className="table-number">Table {qr.tableNumber}</div>
-                  <Image src={qr.qrCodeUrl} alt={`Table ${qr.tableNumber}`} fill />
+                  <Image src={qr.qrCodeUrl} alt={`Table ${qr.tableNumber}`} width={250} height={250} />
                   <div className="payment-code">
                     Payment Code: <strong>{qr.paymentCode}</strong>
                   </div>
@@ -346,7 +321,7 @@ function AdminSettings() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default AdminSettings
+export default AdminSettings;
