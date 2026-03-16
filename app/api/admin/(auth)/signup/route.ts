@@ -1,10 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { emailQueue } from "@/lib/queues/emailQueue";
-
+import { staffLoginSchema } from "@/lib/validations/staff_validation";
 export async function POST(req: NextRequest) {
   try {
-    const { email, password } = await req.json();
+     const body = await req.json();
+
+    const parsed = staffLoginSchema.safeParse(body);
+
+    if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid request data" },
+      { status: 400 }
+    );
+    }
+
+    const { email, password } = parsed.data;
+
     const supabase = await createClient();
 
       const {data: staff , error: staffError} = await supabase.from('staff').select('id').eq("email", email ).single();

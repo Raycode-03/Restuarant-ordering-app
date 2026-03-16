@@ -2,6 +2,11 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
+import React from 'react';
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+
+   
+  
 export default function Error({
   error,
   reset,
@@ -18,6 +23,11 @@ export default function Error({
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">
       <div className="max-w-md w-full text-center">
         <h2 className="text-2xl font-bold text-red-600">Something went wrong!</h2>
+         <DotLottieReact
+      src="/logos/error.lottie"
+      loop
+      autoplay
+    />
         <p className="mt-2 text-gray-600">
           {error.message || 'We apologize for the inconvenience.'}
         </p>
