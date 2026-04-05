@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import React from 'react';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
-
+import {useRouter} from 'next/navigation';
    
   
 export default function Error({
@@ -14,6 +14,7 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const  router = useRouter();
   useEffect(() => {
     console.error(error);
   }, [error]);
@@ -32,7 +33,9 @@ export default function Error({
         </p>
         <div className="mt-6 space-y-3">
           <button
-            onClick={() => reset()}
+            onClick={() => {reset()
+              router.refresh();}
+            }
             className="w-full px-6 py-3 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700"
           >
             Try again
